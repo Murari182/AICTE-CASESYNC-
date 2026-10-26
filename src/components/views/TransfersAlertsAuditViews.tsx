@@ -319,28 +319,294 @@ export const TransfersAndEscalationsView: React.FC = () => {
 export const AlertsAndNotificationsView: React.FC = () => {
   const {
     alerts,
+    roleProfile,
+    hasPermission,
     updateAlertItem,
+    markAlertRead,
+    markAllAlertsRead,
+    assignAlertItem,
     openCaseDetail,
     openInstitutionProfile,
     setActiveScreen,
   } = useCaseSync();
 
-  const [severityFilter, setSeverityFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState('Open');
-  const [typeFilter, setTypeFilter] = useState('ALL');
+  const [categoryTab, setCategoryTab] = useState<string>('ALL');
+  const [severityFilter, setSeverityFilter] = useState<string>('ALL');
+  const [bureauFilter, setBureauFilter] = useState<string>('ALL');
+  const [regionFilter, setRegionFilter] = useState<string>('ALL');
+  const [institutionFilter, setInstitutionFilter] = useState<string>('ALL');
+  const [readFilter, setReadFilter] = useState<'ALL' | 'UNREAD' | 'READ'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>('Open');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
-  const uniqueTypes = useMemo(
-    () => Array.from(new Set(alerts.map((a) => a.alert_type))),
+  // State for inline Assign Officer & Dismiss Reason drawers per alert card
+  const [activeActionAlertId, setActiveActionAlertId] = useState<string | null>(
+    null
+  );
+  const [activeActionMode, setActiveActionMode] = useState<
+    'assign' | 'resolve' | 'dismiss' | null
+  >(null);
+  const [assigneeInput, setAssigneeInput] = useState<string>('');
+  const [reasonInput, setReasonInput] = useState<string>('');
+
+  const canModifyAlerts = hasPermission('update_case_status');
+
+  // 5 Summary KPI Metrics calculated from live visible alerts
+  const summaryStats = useMemo(() => {
+    const openAlerts = alerts.filter((a) => a.resolution_status === 'Open');
+    const activeCount = openAlerts.length;
+    const criticalCount = openAlerts.filter(
+      (a) => a.severity === 'Critical'
+    ).length;
+    const overdueCount = openAlerts.filter(
+      (a) => a.alert_type === 'Overdue Case'
+    ).length;
+    const overlapCount = openAlerts.filter(
+      (a) =>
+        a.alert_type === 'Potential Overlapping Cases' ||
+        a.alert_type === 'Institution Identity Verification'
+    ).length;
+    const pendingCoordCount = openAlerts.filter(
+      (a) =>
+        a.alert_type === 'Cases Awaiting Bureau Coordination' ||
+        a.alert_type === 'Cases Pending Transfer Acceptance'
+    ).length;
+    const unreadCount = alerts.filter(
+      (a) => !a.is_read && a.resolution_status !== 'Dismissed'
+    ).length;
+
+    return {
+      activeCount,
+      criticalCount,
+      overdueCount,
+      overlapCount,
+      pendingCoordCount,
+      unreadCount,
+    };
+  }, [alerts]);
+
+  const categoryTabs = useMemo(
+    () => [
+      { id: 'ALL', label: 'All Alerts', count: alerts.length },
+      {
+        id: 'Potential Overlaps',
+        label: 'Potential Overlaps',
+        count: alerts.filter(
+          (a) => a.alert_type === 'Potential Overlapping Cases'
+        ).length,
+      },
+      {
+        id: 'Deadline Approaching',
+        label: 'Deadline Approaching',
+        count: alerts.filter(
+          (a) => a.alert_type === 'Case Approaching Deadline'
+        ).length,
+      },
+      {
+        id: 'Overdue Cases',
+        label: 'Overdue Cases',
+        count: alerts.filter((a) => a.alert_type === 'Overdue Case').length,
+      },
+      {
+        id: 'Bureau Coordination',
+        label: 'Bureau Coordination',
+        count: alerts.filter(
+          (a) => a.alert_type === 'Cases Awaiting Bureau Coordination'
+        ).length,
+      },
+      {
+        id: 'Transfer Acceptance',
+        label: 'Transfer Acceptance',
+        count: alerts.filter(
+          (a) => a.alert_type === 'Cases Pending Transfer Acceptance'
+        ).length,
+      },
+      {
+        id: 'Escalations',
+        label: 'Escalations',
+        count: alerts.filter(
+          (a) =>
+            a.alert_type === 'Escalation Awaiting Action' ||
+            a.alert_type === 'Cases Requiring Senior Review'
+        ).length,
+      },
+      {
+        id: 'Institution Verification',
+        label: 'Institution Verification',
+        count: alerts.filter(
+          (a) => a.alert_type === 'Institution Identity Verification'
+        ).length,
+      },
+    ],
     [alerts]
   );
 
-  const filteredAlerts = alerts.filter((a) => {
-    if (severityFilter !== 'ALL' && a.severity !== severityFilter) return false;
-    if (statusFilter !== 'ALL' && a.resolution_status !== statusFilter)
-      return false;
-    if (typeFilter !== 'ALL' && a.alert_type !== typeFilter) return false;
-    return true;
-  });
+  const uniqueBureaus = useMemo(
+    () => Array.from(new Set(alerts.flatMap((a) => a.bureaus))),
+    [alerts]
+  );
+
+  const uniqueRegions = useMemo(
+    () =>
+      Array.from(
+        new Set(alerts.map((a) => a.region).filter(Boolean) as string[])
+      ),
+    [alerts]
+  );
+
+  const uniqueInstitutions = useMemo(() => {
+    const map = new Map<string, string>();
+    alerts.forEach((a) => {
+      if (!map.has(a.institution_id)) {
+        map.set(a.institution_id, a.institution_name);
+      }
+    });
+    return Array.from(map.entries());
+  }, [alerts]);
+
+  const filteredAlerts = useMemo(() => {
+    return alerts.filter((a) => {
+      // Category tab filter
+      if (categoryTab === 'Potential Overlaps') {
+        if (a.alert_type !== 'Potential Overlapping Cases') return false;
+      } else if (categoryTab === 'Deadline Approaching') {
+        if (a.alert_type !== 'Case Approaching Deadline') return false;
+      } else if (categoryTab === 'Overdue Cases') {
+        if (a.alert_type !== 'Overdue Case') return false;
+      } else if (categoryTab === 'Bureau Coordination') {
+        if (a.alert_type !== 'Cases Awaiting Bureau Coordination') return false;
+      } else if (categoryTab === 'Transfer Acceptance') {
+        if (a.alert_type !== 'Cases Pending Transfer Acceptance') return false;
+      } else if (categoryTab === 'Escalations') {
+        if (
+          a.alert_type !== 'Escalation Awaiting Action' &&
+          a.alert_type !== 'Cases Requiring Senior Review'
+        )
+          return false;
+      } else if (categoryTab === 'Institution Verification') {
+        if (a.alert_type !== 'Institution Identity Verification') return false;
+      }
+
+      if (severityFilter !== 'ALL' && a.severity !== severityFilter) {
+        return false;
+      }
+
+      if (bureauFilter !== 'ALL' && !a.bureaus.includes(bureauFilter as any)) {
+        return false;
+      }
+
+      if (regionFilter !== 'ALL' && a.region !== regionFilter) {
+        return false;
+      }
+
+      if (
+        institutionFilter !== 'ALL' &&
+        a.institution_id !== institutionFilter
+      ) {
+        return false;
+      }
+
+      if (readFilter === 'UNREAD' && a.is_read) return false;
+      if (readFilter === 'READ' && !a.is_read) return false;
+
+      const lifecycle =
+        a.lifecycle_status ||
+        (a.resolution_status === 'Resolved'
+          ? 'Resolved'
+          : a.resolution_status === 'Dismissed'
+            ? 'Dismissed'
+            : a.acknowledgement_status === 'Acknowledged'
+              ? 'Acknowledged'
+              : 'Active');
+
+      if (statusFilter === 'Open') {
+        if (a.resolution_status !== 'Open') return false;
+      } else if (
+        statusFilter === 'Active' ||
+        statusFilter === 'Acknowledged' ||
+        statusFilter === 'Assigned'
+      ) {
+        if (lifecycle !== statusFilter) return false;
+      } else if (
+        statusFilter === 'Resolved' ||
+        statusFilter === 'Dismissed'
+      ) {
+        if (a.resolution_status !== statusFilter) return false;
+      }
+
+      if (dateFrom) {
+        const createdMs = new Date(a.created_at).getTime();
+        const fromMs = new Date(`${dateFrom}T00:00:00Z`).getTime();
+        if (!Number.isNaN(fromMs) && createdMs < fromMs) return false;
+      }
+
+      if (dateTo) {
+        const createdMs = new Date(a.created_at).getTime();
+        const toMs = new Date(`${dateTo}T23:59:59Z`).getTime();
+        if (!Number.isNaN(toMs) && createdMs > toMs) return false;
+      }
+
+      const q = searchQuery.trim().toLowerCase();
+      if (q) {
+        const matchesText =
+          a.alert_id.toLowerCase().includes(q) ||
+          (a.title && a.title.toLowerCase().includes(q)) ||
+          a.reason.toLowerCase().includes(q) ||
+          a.institution_name.toLowerCase().includes(q) ||
+          a.aicte_permanent_id.toLowerCase().includes(q) ||
+          a.case_ids.some((cid) => cid.toLowerCase().includes(q)) ||
+          a.assigned_to.toLowerCase().includes(q);
+        if (!matchesText) return false;
+      }
+
+      return true;
+    });
+  }, [
+    alerts,
+    categoryTab,
+    severityFilter,
+    bureauFilter,
+    regionFilter,
+    institutionFilter,
+    readFilter,
+    statusFilter,
+    dateFrom,
+    dateTo,
+    searchQuery,
+  ]);
+
+  const resetAllFilters = () => {
+    setCategoryTab('ALL');
+    setSeverityFilter('ALL');
+    setBureauFilter('ALL');
+    setRegionFilter('ALL');
+    setInstitutionFilter('ALL');
+    setReadFilter('ALL');
+    setStatusFilter('ALL');
+    setDateFrom('');
+    setDateTo('');
+    setSearchQuery('');
+  };
+
+  const openActionPanel = (
+    alertId: string,
+    mode: 'assign' | 'resolve' | 'dismiss',
+    currentAssignee?: string
+  ) => {
+    setActiveActionAlertId(alertId);
+    setActiveActionMode(mode);
+    setAssigneeInput(currentAssignee || roleProfile.displayName);
+    setReasonInput('');
+  };
+
+  const closeActionPanel = () => {
+    setActiveActionAlertId(null);
+    setActiveActionMode(null);
+    setAssigneeInput('');
+    setReasonInput('');
+  };
 
   return (
     <div className="space-y-6">
@@ -349,175 +615,739 @@ export const AlertsAndNotificationsView: React.FC = () => {
         <div>
           <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--accent-blue)] mb-1">
             <Bell className="w-3.5 h-3.5" />
-            SLA & Cross-Bureau Alert Center
+            SLA & Cross-Bureau Alert Center • Real-Time Lifecycle Sync
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] tracking-tight">
             Alerts, Deadlines & SLA Monitoring
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
-            Monitor potential overlapping cases, approaching disposal deadlines, unverified PIDs, and pending transfer acceptances.
+            Monitor potential overlapping cases, approaching disposal deadlines, unverified PIDs, and pending transfer acceptances across AICTE Bureaus.
           </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {summaryStats.unreadCount > 0 && (
+            <button
+              onClick={markAllAlertsRead}
+              className="neu-btn-secondary px-3.5 py-2 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
+              title="Mark all notifications as read without resolving underlying alerts"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 text-[var(--accent-blue)]" />
+              Mark All Notifications Read ({summaryStats.unreadCount})
+            </button>
+          )}
+          <button
+            onClick={resetAllFilters}
+            className="neu-btn-secondary px-3.5 py-2 rounded-xl text-xs font-semibold cursor-pointer"
+          >
+            Show All Alert History
+          </button>
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="neu-card rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-        <div>
-          <label className="block font-bold uppercase text-[10px] text-[var(--text-muted)] mb-1">
-            Resolution Status
-          </label>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="neu-inset w-full px-3 py-2 rounded-xl font-medium"
-          >
-            <option value="ALL">All Alert States</option>
-            <option value="Open">Open (Active)</option>
-            <option value="Resolved">Resolved</option>
-            <option value="Dismissed">Dismissed</option>
-          </select>
+      {/* 5 Summary KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+        <button
+          onClick={() => {
+            setStatusFilter('Open');
+            setCategoryTab('ALL');
+            setSeverityFilter('ALL');
+          }}
+          className="neu-card rounded-2xl p-4 text-left flex flex-col justify-between gap-2 hover:border-[#3478F6] transition-colors cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+              Active Alerts
+            </span>
+            <Bell className="w-4 h-4 text-[var(--accent-blue)]" />
+          </div>
+          <div className="text-2xl font-extrabold font-mono-tabular text-[var(--text-primary)]">
+            {summaryStats.activeCount}
+          </div>
+          <div className="text-[11px] text-[var(--text-secondary)]">
+            {summaryStats.unreadCount} unread notifications
+          </div>
+        </button>
+
+        <button
+          onClick={() => {
+            setStatusFilter('Open');
+            setSeverityFilter('Critical');
+            setCategoryTab('ALL');
+          }}
+          className="neu-card rounded-2xl p-4 text-left flex flex-col justify-between gap-2 hover:border-[var(--status-critical)] transition-colors cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+              Critical Alerts
+            </span>
+            <ShieldAlert className="w-4 h-4 text-[var(--status-critical)]" />
+          </div>
+          <div className="text-2xl font-extrabold font-mono-tabular text-[var(--status-critical)]">
+            {summaryStats.criticalCount}
+          </div>
+          <div className="text-[11px] text-[var(--text-secondary)]">
+            Immediate Bureau attention
+          </div>
+        </button>
+
+        <button
+          onClick={() => {
+            setStatusFilter('Open');
+            setCategoryTab('Overdue Cases');
+            setSeverityFilter('ALL');
+          }}
+          className="neu-card rounded-2xl p-4 text-left flex flex-col justify-between gap-2 hover:border-[var(--status-critical)] transition-colors cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+              Overdue Cases
+            </span>
+            <Clock className="w-4 h-4 text-[var(--status-critical)]" />
+          </div>
+          <div className="text-2xl font-extrabold font-mono-tabular text-[var(--text-primary)]">
+            {summaryStats.overdueCount}
+          </div>
+          <div className="text-[11px] text-[var(--text-secondary)]">
+            Exceeded disposal SLA date
+          </div>
+        </button>
+
+        <button
+          onClick={() => {
+            setStatusFilter('Open');
+            setCategoryTab('Potential Overlaps');
+            setSeverityFilter('ALL');
+          }}
+          className="neu-card rounded-2xl p-4 text-left flex flex-col justify-between gap-2 hover:border-[var(--status-warning)] transition-colors cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+              Overlap Alerts
+            </span>
+            <AlertTriangle className="w-4 h-4 text-[var(--status-warning)]" />
+          </div>
+          <div className="text-2xl font-extrabold font-mono-tabular text-[var(--text-primary)]">
+            {summaryStats.overlapCount}
+          </div>
+          <div className="text-[11px] text-[var(--text-secondary)]">
+            Cross-Bureau & PID checks
+          </div>
+        </button>
+
+        <button
+          onClick={() => {
+            setStatusFilter('Open');
+            setCategoryTab('Bureau Coordination');
+            setSeverityFilter('ALL');
+          }}
+          className="neu-card rounded-2xl p-4 text-left flex flex-col justify-between gap-2 hover:border-[#3478F6] transition-colors cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+              Pending Coordination
+            </span>
+            <ArrowRightLeft className="w-4 h-4 text-[var(--accent-blue)]" />
+          </div>
+          <div className="text-2xl font-extrabold font-mono-tabular text-[var(--text-primary)]">
+            {summaryStats.pendingCoordCount}
+          </div>
+          <div className="text-[11px] text-[var(--text-secondary)]">
+            Coordination & transfer handoffs
+          </div>
+        </button>
+      </div>
+
+      {/* Category Filter Tabs */}
+      <div className="neu-card rounded-2xl p-2 flex items-center gap-1.5 overflow-x-auto">
+        {categoryTabs.map((tab) => {
+          const isActive = categoryTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setCategoryTab(tab.id)}
+              className={`px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
+                isActive
+                  ? 'neu-btn-primary shadow-xs'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
+              }`}
+            >
+              <span>{tab.label}</span>
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono-tabular font-bold ${
+                  isActive
+                    ? 'bg-white/20 text-white'
+                    : 'bg-[var(--bg-inset)] text-[var(--text-primary)]'
+                }`}
+              >
+                {tab.count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Multi-Facet Filter Controls */}
+      <div className="neu-card rounded-2xl p-4 space-y-3 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="lg:col-span-2">
+            <label className="block font-bold uppercase text-[10px] text-[var(--text-muted)] mb-1">
+              Search Alert ID, Case ID, Institution, or Officer
+            </label>
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by CMP-2026-..., AICTE PID, institution, or reason..."
+                className="neu-inset w-full pl-9 pr-3 py-2 rounded-xl font-medium focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-bold uppercase text-[10px] text-[var(--text-muted)] mb-1">
+              Alert Lifecycle Status
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="neu-inset w-full px-3 py-2 rounded-xl font-medium"
+            >
+              <option value="ALL">All Lifecycle States</option>
+              <option value="Open">Unresolved (Active / Ack / Assigned)</option>
+              <option value="Active">Active (Unacknowledged)</option>
+              <option value="Acknowledged">Acknowledged</option>
+              <option value="Assigned">Assigned</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Dismissed">Dismissed</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block font-bold uppercase text-[10px] text-[var(--text-muted)] mb-1">
+              Notification Read State
+            </label>
+            <select
+              value={readFilter}
+              onChange={(e) =>
+                setReadFilter(e.target.value as 'ALL' | 'UNREAD' | 'READ')
+              }
+              className="neu-inset w-full px-3 py-2 rounded-xl font-medium"
+            >
+              <option value="ALL">All (Read & Unread)</option>
+              <option value="UNREAD">Unread Notifications Only</option>
+              <option value="READ">Read Notifications Only</option>
+            </select>
+          </div>
         </div>
 
-        <div>
-          <label className="block font-bold uppercase text-[10px] text-[var(--text-muted)] mb-1">
-            Severity
-          </label>
-          <select
-            value={severityFilter}
-            onChange={(e) => setSeverityFilter(e.target.value)}
-            className="neu-inset w-full px-3 py-2 rounded-xl font-medium"
-          >
-            <option value="ALL">All Severities</option>
-            <option value="Critical">Critical</option>
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-          </select>
-        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2 border-t border-[var(--border-subtle)]">
+          <div>
+            <label className="block font-bold uppercase text-[10px] text-[var(--text-muted)] mb-1">
+              Severity
+            </label>
+            <select
+              value={severityFilter}
+              onChange={(e) => setSeverityFilter(e.target.value)}
+              className="neu-inset w-full px-3 py-2 rounded-xl font-medium"
+            >
+              <option value="ALL">All Severities</option>
+              <option value="Critical">Critical</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
 
-        <div>
-          <label className="block font-bold uppercase text-[10px] text-[var(--text-muted)] mb-1">
-            Alert Category
-          </label>
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="neu-inset w-full px-3 py-2 rounded-xl font-medium"
-          >
-            <option value="ALL">All Alert Types</option>
-            {uniqueTypes.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
+          <div>
+            <label className="block font-bold uppercase text-[10px] text-[var(--text-muted)] mb-1">
+              Bureau / Cell
+            </label>
+            <select
+              value={bureauFilter}
+              onChange={(e) => setBureauFilter(e.target.value)}
+              className="neu-inset w-full px-3 py-2 rounded-xl font-medium"
+            >
+              <option value="ALL">All Bureaus & Cells</option>
+              {uniqueBureaus.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block font-bold uppercase text-[10px] text-[var(--text-muted)] mb-1">
+              Region
+            </label>
+            <select
+              value={regionFilter}
+              onChange={(e) => setRegionFilter(e.target.value)}
+              className="neu-inset w-full px-3 py-2 rounded-xl font-medium"
+            >
+              <option value="ALL">All Regions</option>
+              {uniqueRegions.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block font-bold uppercase text-[10px] text-[var(--text-muted)] mb-1">
+              Institution
+            </label>
+            <select
+              value={institutionFilter}
+              onChange={(e) => setInstitutionFilter(e.target.value)}
+              className="neu-inset w-full px-3 py-2 rounded-xl font-medium"
+            >
+              <option value="ALL">All Institutions</option>
+              {uniqueInstitutions.map(([id, name]) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block font-bold uppercase text-[10px] text-[var(--text-muted)] mb-1">
+                From Date
+              </label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="neu-inset w-full px-2 py-2 rounded-xl font-mono-tabular text-[11px]"
+              />
+            </div>
+            <div>
+              <label className="block font-bold uppercase text-[10px] text-[var(--text-muted)] mb-1">
+                To Date
+              </label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="neu-inset w-full px-2 py-2 rounded-xl font-mono-tabular text-[11px]"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Alert Cards */}
       <div className="space-y-3">
-        {filteredAlerts.map((alert) => (
-          <div
-            key={alert.alert_id}
-            className="neu-card rounded-2xl p-5 space-y-3 text-xs"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-mono font-bold text-[var(--accent-blue)]">
-                  {alert.alert_id}
-                </span>
-                <span
-                  className={`px-2.5 py-0.5 rounded-md font-bold ${
-                    alert.severity === 'Critical'
-                      ? 'bg-[var(--status-critical)]/15 text-[var(--status-critical)]'
-                      : alert.severity === 'High'
-                        ? 'bg-[var(--status-warning)]/15 text-[var(--status-warning)]'
-                        : 'bg-[var(--accent-blue)]/15 text-[var(--accent-blue)]'
-                  }`}
-                >
-                  {alert.severity}
-                </span>
-                <span className="font-bold text-sm text-[var(--text-primary)]">
-                  {alert.alert_type}
-                </span>
-                <span className="px-2 py-0.5 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-secondary)]">
-                  {alert.acknowledgement_status} • {alert.resolution_status}
-                </span>
-              </div>
-
-              <span className="font-mono text-[11px] text-[var(--text-muted)]">
-                Due: {alert.due_at}
-              </span>
+        {filteredAlerts.length === 0 ? (
+          <div className="neu-card rounded-2xl p-8 text-center space-y-2">
+            <div className="text-sm font-bold text-[var(--text-primary)]">
+              No operational alerts match the selected filters
             </div>
-
-            <p className="text-[var(--text-secondary)] leading-relaxed">
-              {alert.reason}
+            <p className="text-xs text-[var(--text-secondary)]">
+              Try clearing the active filter criteria or switching the Lifecycle Status filter to All Lifecycle States.
             </p>
+            <button
+              onClick={resetAllFilters}
+              className="neu-btn-secondary px-4 py-2 rounded-xl text-xs font-semibold mt-2 cursor-pointer"
+            >
+              Reset Filters
+            </button>
+          </div>
+        ) : (
+          filteredAlerts.map((alert) => {
+            const isUnread = !alert.is_read;
+            const lifecycle =
+              alert.lifecycle_status ||
+              (alert.resolution_status === 'Resolved'
+                ? 'Resolved'
+                : alert.resolution_status === 'Dismissed'
+                  ? 'Dismissed'
+                  : alert.acknowledgement_status === 'Acknowledged'
+                    ? 'Acknowledged'
+                    : 'Active');
+            const isDrawerOpen = activeActionAlertId === alert.alert_id;
 
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[var(--border-subtle)]">
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  onClick={() => openInstitutionProfile(alert.institution_id)}
-                  className="font-semibold text-[var(--accent-blue)] hover:underline inline-flex items-center gap-1"
-                >
-                  <Building2 className="w-3.5 h-3.5" />
-                  {alert.institution_name} ({alert.aicte_permanent_id})
-                </button>
-                <div className="flex items-center gap-1.5">
-                  {alert.case_ids.map((cid) => (
+            return (
+              <div
+                key={alert.alert_id}
+                className={`neu-card rounded-2xl p-5 space-y-3.5 text-xs transition-colors ${
+                  isUnread && alert.resolution_status === 'Open'
+                    ? 'border-l-4 border-l-[#3478F6]'
+                    : ''
+                }`}
+              >
+                {/* Top Metadata Row */}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
-                      key={cid}
-                      onClick={() => openCaseDetail(cid)}
-                      className="px-2 py-0.5 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)] font-mono font-bold text-[var(--accent-blue)] hover:underline"
+                      onClick={() => markAlertRead(alert.alert_id, !alert.is_read)}
+                      className={`px-2 py-0.5 rounded-md font-bold text-[10px] inline-flex items-center gap-1 cursor-pointer border ${
+                        isUnread
+                          ? 'bg-[#3478F6]/12 text-[#3478F6] border-[#3478F6]/30'
+                          : 'bg-[var(--bg-elevated)] text-[var(--text-muted)] border-[var(--border-subtle)]'
+                      }`}
+                      title="Toggle notification read/unread status (independent of alert resolution)"
                     >
-                      {cid}
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          isUnread ? 'bg-[#3478F6]' : 'bg-[var(--text-muted)]'
+                        }`}
+                      />
+                      {isUnread ? 'Unread' : 'Read'}
                     </button>
-                  ))}
+
+                    <span className="font-mono-tabular font-bold text-[var(--accent-blue)]">
+                      {alert.alert_id}
+                    </span>
+
+                    <span
+                      className={`px-2.5 py-0.5 rounded-md font-bold ${
+                        alert.severity === 'Critical'
+                          ? 'bg-[var(--status-critical)]/15 text-[var(--status-critical)]'
+                          : alert.severity === 'High'
+                            ? 'bg-[var(--status-warning)]/15 text-[var(--status-warning)]'
+                            : 'bg-[var(--accent-blue)]/15 text-[var(--accent-blue)]'
+                      }`}
+                    >
+                      {alert.severity}
+                    </span>
+
+                    <span className="px-2.5 py-0.5 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)] font-semibold text-[var(--text-primary)]">
+                      {alert.alert_type}
+                    </span>
+
+                    <span
+                      className={`px-2.5 py-0.5 rounded-md font-bold ${
+                        lifecycle === 'Resolved'
+                          ? 'bg-[var(--status-success)]/15 text-[var(--status-success)]'
+                          : lifecycle === 'Dismissed'
+                            ? 'bg-[var(--bg-inset)] text-[var(--text-muted)]'
+                            : lifecycle === 'Acknowledged' ||
+                                lifecycle === 'Assigned'
+                              ? 'bg-[#3478F6]/15 text-[var(--accent-blue)]'
+                              : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)]'
+                      }`}
+                    >
+                      Lifecycle: {lifecycle}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 font-mono-tabular text-[11px] text-[var(--text-muted)]">
+                    <span>
+                      Created:{' '}
+                      {new Date(alert.created_at).toLocaleDateString('en-IN', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </span>
+                    <span>•</span>
+                    <span>
+                      Due:{' '}
+                      {new Date(alert.due_at).toLocaleDateString('en-IN', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Title & Detailed Reason */}
+                <div>
+                  <h3 className="font-bold text-sm text-[var(--text-primary)]">
+                    {alert.title || `${alert.alert_type} — ${alert.institution_name}`}
+                  </h3>
+                  <p className="text-[var(--text-secondary)] leading-relaxed mt-1">
+                    {alert.reason}
+                  </p>
+                </div>
+
+                {/* Operational Details Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-[var(--text-muted)] block">
+                      Affected Institution & Region
+                    </span>
+                    <button
+                      onClick={() => openInstitutionProfile(alert.institution_id)}
+                      className="font-bold text-[var(--accent-blue)] hover:underline inline-flex items-center gap-1 mt-0.5 text-left cursor-pointer"
+                    >
+                      <Building2 className="w-3.5 h-3.5 shrink-0" />
+                      <span>{alert.institution_name}</span>
+                    </button>
+                    <span className="block font-mono-tabular text-[11px] text-[var(--text-muted)]">
+                      PID: {alert.aicte_permanent_id}
+                      {alert.region ? ` • ${alert.region}` : ''}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-[var(--text-muted)] block">
+                      Bureaus Involved & Assigned Officer
+                    </span>
+                    <span className="font-semibold text-[var(--text-primary)] block mt-0.5">
+                      {alert.bureaus.join(' + ')}
+                    </span>
+                    <span className="block text-[11px] text-[var(--text-secondary)]">
+                      Assigned: <strong>{alert.assigned_to}</strong>
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-[var(--text-muted)] block">
+                      Recommended Next Action
+                    </span>
+                    <span className="font-semibold text-[var(--text-primary)] block mt-0.5">
+                      {alert.recommended_action}
+                    </span>
+                    {(alert.resolution_reason || alert.dismiss_reason) && (
+                      <span className="block text-[11px] text-[var(--status-success)] mt-0.5">
+                        Audit Note: {alert.resolution_reason || alert.dismiss_reason}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Inline Action Drawer for Assign / Resolve / Dismiss */}
+                {isDrawerOpen && activeActionMode && (
+                  <div className="neu-inset rounded-xl p-3.5 space-y-2.5 border border-[#3478F6]/30">
+                    {activeActionMode === 'assign' && (
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <input
+                          type="text"
+                          value={assigneeInput}
+                          onChange={(e) => setAssigneeInput(e.target.value)}
+                          placeholder="Enter officer name and Bureau designation..."
+                          className="neu-card flex-1 px-3 py-2 rounded-xl text-xs"
+                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              if (assignAlertItem(alert.alert_id, assigneeInput)) {
+                                closeActionPanel();
+                              }
+                            }}
+                            className="neu-btn-primary px-3.5 py-2 rounded-xl font-semibold cursor-pointer"
+                          >
+                            Confirm Assignment
+                          </button>
+                          <button
+                            onClick={closeActionPanel}
+                            className="neu-btn-secondary px-3 py-2 rounded-xl font-semibold cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeActionMode === 'resolve' && (
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <input
+                          type="text"
+                          value={reasonInput}
+                          onChange={(e) => setReasonInput(e.target.value)}
+                          placeholder="Enter resolution remark for case audit history..."
+                          className="neu-card flex-1 px-3 py-2 rounded-xl text-xs"
+                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              if (
+                                updateAlertItem(
+                                  alert.alert_id,
+                                  'resolve',
+                                  reasonInput ||
+                                    `Resolved by ${roleProfile.displayName} after verification.`
+                                )
+                              ) {
+                                closeActionPanel();
+                              }
+                            }}
+                            className="neu-btn-primary px-3.5 py-2 rounded-xl font-semibold cursor-pointer"
+                          >
+                            Confirm Resolution
+                          </button>
+                          <button
+                            onClick={closeActionPanel}
+                            className="neu-btn-secondary px-3 py-2 rounded-xl font-semibold cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeActionMode === 'dismiss' && (
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <input
+                          type="text"
+                          value={reasonInput}
+                          onChange={(e) => setReasonInput(e.target.value)}
+                          placeholder="Required: Enter audit reason for dismissing this alert..."
+                          className="neu-card flex-1 px-3 py-2 rounded-xl text-xs"
+                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              if (
+                                updateAlertItem(
+                                  alert.alert_id,
+                                  'dismiss',
+                                  reasonInput
+                                )
+                              ) {
+                                closeActionPanel();
+                              }
+                            }}
+                            className="neu-btn-secondary px-3.5 py-2 rounded-xl font-semibold text-[var(--status-critical)] cursor-pointer"
+                          >
+                            Confirm Dismissal
+                          </button>
+                          <button
+                            onClick={closeActionPanel}
+                            className="neu-btn-secondary px-3 py-2 rounded-xl font-semibold cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Bottom Action Bar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                  {/* Left: Direct Case & Context Navigation */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {alert.case_ids.map((cid) => (
+                      <button
+                        key={cid}
+                        onClick={() => {
+                          markAlertRead(alert.alert_id, true);
+                          openCaseDetail(cid);
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-subtle)] font-mono-tabular font-bold text-[var(--accent-blue)] hover:underline cursor-pointer"
+                      >
+                        Open Case {cid}
+                      </button>
+                    ))}
+
+                    <button
+                      onClick={() => {
+                        markAlertRead(alert.alert_id, true);
+                        openInstitutionProfile(alert.institution_id);
+                      }}
+                      className="neu-btn-secondary px-2.5 py-1 rounded-lg font-semibold cursor-pointer"
+                    >
+                      View Institution
+                    </button>
+
+                    {(alert.alert_type === 'Potential Overlapping Cases' ||
+                      alert.alert_type ===
+                        'Institution Identity Verification') && (
+                      <button
+                        onClick={() => {
+                          markAlertRead(alert.alert_id, true);
+                          setActiveScreen('overlaps');
+                        }}
+                        className="neu-btn-secondary px-2.5 py-1 rounded-lg font-semibold text-[var(--accent-blue)] cursor-pointer"
+                      >
+                        Review Overlap
+                      </button>
+                    )}
+
+                    {alert.alert_type ===
+                      'Cases Awaiting Bureau Coordination' && (
+                      <button
+                        onClick={() => {
+                          markAlertRead(alert.alert_id, true);
+                          setActiveScreen('coordination');
+                        }}
+                        className="neu-btn-secondary px-2.5 py-1 rounded-lg font-semibold text-[var(--accent-blue)] cursor-pointer"
+                      >
+                        Request Coordination
+                      </button>
+                    )}
+
+                    {(alert.alert_type ===
+                      'Cases Pending Transfer Acceptance' ||
+                      alert.alert_type === 'Escalation Awaiting Action') && (
+                      <button
+                        onClick={() => {
+                          markAlertRead(alert.alert_id, true);
+                          setActiveScreen('transfers');
+                        }}
+                        className="neu-btn-secondary px-2.5 py-1 rounded-lg font-semibold text-[var(--accent-blue)] cursor-pointer"
+                      >
+                        Open Transfers & Escalations
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Right: Alert Lifecycle Actions */}
+                  {canModifyAlerts && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {alert.acknowledgement_status === 'Unacknowledged' &&
+                        alert.resolution_status === 'Open' && (
+                          <button
+                            onClick={() =>
+                              updateAlertItem(alert.alert_id, 'acknowledge')
+                            }
+                            className="neu-btn-secondary px-3 py-1.5 rounded-lg font-semibold cursor-pointer"
+                          >
+                            Acknowledge Alert
+                          </button>
+                        )}
+
+                      {alert.resolution_status === 'Open' && (
+                        <>
+                          <button
+                            onClick={() =>
+                              openActionPanel(
+                                alert.alert_id,
+                                'assign',
+                                alert.assigned_to
+                              )
+                            }
+                            className="neu-btn-secondary px-3 py-1.5 rounded-lg font-semibold cursor-pointer"
+                          >
+                            Assign Alert
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              openActionPanel(alert.alert_id, 'resolve')
+                            }
+                            className="neu-btn-primary px-3 py-1.5 rounded-lg font-semibold cursor-pointer"
+                          >
+                            Resolve Alert
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              openActionPanel(alert.alert_id, 'dismiss')
+                            }
+                            className="neu-btn-secondary px-3 py-1.5 rounded-lg font-semibold text-[var(--text-muted)] hover:text-[var(--status-critical)] cursor-pointer"
+                          >
+                            Dismiss with Reason
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                {alert.alert_type === 'Potential Overlapping Cases' && (
-                  <button
-                    onClick={() => setActiveScreen('overlaps')}
-                    className="neu-btn-secondary px-3 py-1.5 rounded-lg font-semibold text-[var(--accent-blue)]"
-                  >
-                    Review Overlap
-                  </button>
-                )}
-                {alert.acknowledgement_status === 'Unacknowledged' && (
-                  <button
-                    onClick={() => updateAlertItem(alert.alert_id, 'acknowledge')}
-                    className="neu-btn-secondary px-3 py-1.5 rounded-lg font-semibold"
-                  >
-                    Acknowledge
-                  </button>
-                )}
-                {alert.resolution_status === 'Open' && (
-                  <>
-                    <button
-                      onClick={() => updateAlertItem(alert.alert_id, 'resolve')}
-                      className="neu-btn-primary px-3 py-1.5 rounded-lg font-semibold"
-                    >
-                      Mark Resolved
-                    </button>
-                    <button
-                      onClick={() =>
-                        updateAlertItem(
-                          alert.alert_id,
-                          'dismiss',
-                          'Reviewed and dismissed by officer.'
-                        )
-                      }
-                      className="neu-btn-secondary px-3 py-1.5 rounded-lg font-semibold text-[var(--text-muted)]"
-                    >
-                      Dismiss
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
+            );
+          })
+        )}
       </div>
     </div>
   );

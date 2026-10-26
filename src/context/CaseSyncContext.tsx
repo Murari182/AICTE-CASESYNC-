@@ -11,6 +11,7 @@ import {
   INITIAL_SLA_CONFIG,
   INITIAL_TRANSFERS,
   classifyAndMatchComplaint,
+  computeDeadlineState,
 } from '../data/seedData';
 import {
   AlertRecord,
@@ -432,6 +433,9 @@ interface CaseSyncContextValue {
     action: 'acknowledge' | 'resolve' | 'dismiss',
     reason?: string
   ) => boolean;
+  markAlertRead: (alertId: string, isRead?: boolean) => void;
+  markAllAlertsRead: () => void;
+  assignAlertItem: (alertId: string, assignee: string) => boolean;
   saveSystemSettings: (newRules: RoutingRule[], newSla: SlaConfig) => void;
   resetDemoData: () => Promise<void>;
 }
@@ -794,6 +798,276 @@ export const CaseSyncProvider: React.FC<{ children: React.ReactNode }> = ({
       'info'
     );
   };
+
+  // Deterministic Alert & SLA Synchronization Engine (Deduplicated by stable key)
+  useEffect(() => {
+    setAlerts((prevAlerts) => {
+      let changed = false;
+      const nextAlerts = prevAlerts.map((a) => {
+        // Ensure backward-compatible defaults on stored alerts
+        const normalizedLifecycle =
+          a.lifecycle_status ||
+          (a.resolution_status === 'Resolved'
+            ? 'Resolved'
+            : a.resolution_status === 'Dismissed'
+              ? 'Dismissed'
+              : a.acknowledgement_status === 'Acknowledged'
+                ? 'Acknowledged'
+                : 'Active');
+        const normalizedRead = a.is_read ?? false;
+        if (
+          a.lifecycle_status !== normalizedLifecycle ||
+          a.is_read === undefined
+        ) {
+          changed = true;
+          return {
+            ...a,
+            lifecycle_status: normalizedLifecycle,
+            is_read: normalizedRead,
+          };
+        }
+        return a;
+      });
+
+      const byKey = new Map<string, number>();
+      nextAlerts.forEach((a, idx) => {
+        if (a.deduplication_key) {
+          byKey.set(a.deduplication_key, idx);
+        }
+      });
+
+      const upsertAlert = (candidate: AlertRecord) => {
+        const key = candidate.deduplication_key;
+        if (!key) return;
+        const existingIdx = byKey.get(key);
+        if (existingIdx === undefined) {
+          // Also check if an older alert without deduplication_key matches the same type and case_ids
+          const legacyIdx = nextAlerts.findIndex(
+            (existing) =>
+              existing.alert_type === candidate.alert_type &&
+              existing.case_ids.some((id) => candidate.case_ids.includes(id))
+          );
+          if (legacyIdx !== -1) {
+            byKey.set(key, legacyIdx);
+            if (!nextAlerts[legacyIdx].deduplication_key) {
+              nextAlerts[legacyIdx] = {
+                ...nextAlerts[legacyIdx],
+                deduplication_key: key,
+                title: nextAlerts[legacyIdx].title || candidate.title,
+                region: nextAlerts[legacyIdx].region || candidate.region,
+              };
+              changed = true;
+            }
+            return;
+          }
+          nextAlerts.unshift(candidate);
+          byKey.set(key, 0);
+          changed = true;
+        }
+      };
+
+      // 1. Check Overdue & Approaching Deadline cases
+      allCases.forEach((c) => {
+        const dState = computeDeadlineState(c, undefined, slaConfig);
+        const overdueKey = `overdue:${c.id}`;
+        const dueSoonKey = `duesoon:${c.id}`;
+
+        if (c.status === 'Disposed') {
+          nextAlerts.forEach((a, idx) => {
+            if (
+              a.resolution_status === 'Open' &&
+              a.case_ids.length === 1 &&
+              a.case_ids[0] === c.id &&
+              (a.alert_type === 'Overdue Case' ||
+                a.alert_type === 'Case Approaching Deadline')
+            ) {
+              nextAlerts[idx] = {
+                ...a,
+                acknowledgement_status: 'Acknowledged',
+                resolution_status: 'Resolved',
+                lifecycle_status: 'Resolved',
+                resolved_at: new Date().toISOString(),
+                resolution_reason: `Automatically resolved upon disposal of ${c.id}.`,
+              };
+              changed = true;
+            }
+          });
+          return;
+        }
+
+        if (dState === 'Overdue') {
+          upsertAlert({
+            alert_id: `ALT-OVD-${c.id.slice(-4)}`,
+            title: `Overdue Disposal Deadline — ${c.title}`,
+            alert_type: 'Overdue Case',
+            case_ids: [c.id],
+            institution_id: c.institution_id,
+            institution_name: c.institutionName,
+            aicte_permanent_id: c.aicte_permanent_id,
+            region: c.region,
+            bureaus: [c.current_bureau],
+            severity: 'Critical',
+            reason: `Case ${c.id} has exceeded its expected disposal deadline (${new Date(c.expected_disposal_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}).`,
+            recommended_action: `Expedite Bureau disposal or escalate ${c.id} for senior review.`,
+            created_at: c.updatedAt || c.createdAt,
+            due_at: c.expected_disposal_at,
+            assigned_to: c.assigned_officer,
+            is_read: false,
+            lifecycle_status: 'Active',
+            deduplication_key: overdueKey,
+            acknowledgement_status: 'Unacknowledged',
+            resolution_status: 'Open',
+          });
+        } else if (dState === 'Due Soon') {
+          upsertAlert({
+            alert_id: `ALT-DUE-${c.id.slice(-4)}`,
+            title: `Disposal Deadline Approaching — ${c.title}`,
+            alert_type: 'Case Approaching Deadline',
+            case_ids: [c.id],
+            institution_id: c.institution_id,
+            institution_name: c.institutionName,
+            aicte_permanent_id: c.aicte_permanent_id,
+            region: c.region,
+            bureaus: [c.current_bureau],
+            severity: 'High',
+            reason: `Case ${c.id} is within the configured ${slaConfig.dueSoonDaysThreshold}-day SLA threshold prior to expected disposal.`,
+            recommended_action: `Complete pending Bureau action on ${c.id} before deadline.`,
+            created_at: c.updatedAt || c.createdAt,
+            due_at: c.expected_disposal_at,
+            assigned_to: c.assigned_officer,
+            is_read: false,
+            lifecycle_status: 'Active',
+            deduplication_key: dueSoonKey,
+            acknowledgement_status: 'Unacknowledged',
+            resolution_status: 'Open',
+          });
+        }
+      });
+
+      // 2. Check Cross-Bureau Overlaps & Uncertain Identities
+      if (slaConfig.enableCrossBureauAlerts) {
+        allRelations.forEach((rel) => {
+          const relKey = `rel:${rel.relation_id}`;
+          const inst = allInstitutions.find(
+            (i) => i.institution_id === rel.institution_id
+          );
+          if (
+            rel.review_status === 'Potential Overlap — Review Required' ||
+            rel.review_status === 'Institution Identity Uncertain'
+          ) {
+            const isIdentity =
+              rel.review_status === 'Institution Identity Uncertain';
+            upsertAlert({
+              alert_id: `ALT-${rel.relation_id}`,
+              title: isIdentity
+                ? `Institution Identity Verification Required — ${rel.institution_name}`
+                : `Potential Cross-Bureau Overlap — ${rel.case_id_a} & ${rel.case_id_b}`,
+              alert_type: isIdentity
+                ? 'Institution Identity Verification'
+                : 'Potential Overlapping Cases',
+              case_ids: [rel.case_id_a, rel.case_id_b],
+              institution_id: rel.institution_id,
+              institution_name: rel.institution_name,
+              aicte_permanent_id: rel.aicte_permanent_id,
+              region: inst?.region,
+              bureaus: Array.from(new Set([rel.bureau_a, rel.bureau_b])),
+              severity: isIdentity ? 'High' : 'Critical',
+              reason: rel.why_raised || rel.remarks,
+              recommended_action: rel.next_required_action,
+              created_at: '2026-10-25T10:00:00Z',
+              due_at: '2026-10-28T18:00:00Z',
+              assigned_to: rel.coordination_owner,
+              is_read: false,
+              lifecycle_status: 'Active',
+              deduplication_key: relKey,
+              acknowledgement_status: 'Unacknowledged',
+              resolution_status: 'Open',
+            });
+          }
+        });
+      }
+
+      // 3. Check Pending Transfers
+      allTransfers.forEach((trf) => {
+        const trfKey = `trf:${trf.transfer_id}`;
+        const isPending =
+          trf.transfer_status === 'Awaiting Acceptance' ||
+          trf.transfer_status === 'Transfer Requested';
+        const inst = allInstitutions.find(
+          (i) => i.institution_id === trf.institution_id
+        );
+        if (isPending) {
+          upsertAlert({
+            alert_id: `ALT-${trf.transfer_id}`,
+            title: `Transfer ${trf.transfer_id} Awaiting Acceptance by ${trf.receiving_bureau}`,
+            alert_type: 'Cases Pending Transfer Acceptance',
+            case_ids: [trf.case_id],
+            institution_id: trf.institution_id,
+            institution_name: trf.institution_name,
+            aicte_permanent_id: inst?.aicte_permanent_id || '1-000000000',
+            region: inst?.region,
+            bureaus: [trf.originating_bureau, trf.receiving_bureau],
+            severity: 'High',
+            reason: `Transfer ${trf.transfer_id} (${trf.originating_bureau} → ${trf.receiving_bureau}) awaits acceptance.`,
+            recommended_action:
+              'Accept or return transfer in Transfers & Escalations.',
+            created_at: trf.requested_at,
+            due_at: '2026-10-29T18:00:00Z',
+            assigned_to: trf.receiving_officer,
+            is_read: false,
+            lifecycle_status: 'Active',
+            deduplication_key: trfKey,
+            acknowledgement_status: 'Unacknowledged',
+            resolution_status: 'Open',
+          });
+        }
+      });
+
+      // 4. Check Escalations Awaiting Action
+      allEscalations.forEach((esc) => {
+        const escKey = `esc:${esc.escalation_id}`;
+        const inst = allInstitutions.find(
+          (i) => i.institution_id === esc.institution_id
+        );
+        if (esc.status !== 'Resolved') {
+          upsertAlert({
+            alert_id: `ALT-${esc.escalation_id}`,
+            title: `${esc.escalation_level} Escalation (${esc.escalation_id}) — ${esc.case_id}`,
+            alert_type: 'Escalation Awaiting Action',
+            case_ids: [esc.case_id],
+            institution_id: esc.institution_id,
+            institution_name: esc.institution_name,
+            aicte_permanent_id: inst?.aicte_permanent_id || '1-000000000',
+            region: inst?.region,
+            bureaus: [esc.bureau],
+            severity: 'Critical',
+            reason: esc.reason,
+            recommended_action: esc.required_next_action,
+            created_at: esc.timestamp,
+            due_at: '2026-10-28T18:00:00Z',
+            assigned_to: esc.responsible_authority,
+            is_read: false,
+            lifecycle_status:
+              esc.status === 'Acknowledged' ? 'Acknowledged' : 'Active',
+            deduplication_key: escKey,
+            acknowledgement_status:
+              esc.status === 'Acknowledged' ? 'Acknowledged' : 'Unacknowledged',
+            resolution_status: 'Open',
+          });
+        }
+      });
+
+      return changed ? nextAlerts : prevAlerts;
+    });
+  }, [
+    allCases,
+    allRelations,
+    allCoordination,
+    allTransfers,
+    allEscalations,
+    allInstitutions,
+    slaConfig,
+  ]);
 
   // Persist unified state to localStorage and sync to backend
   useEffect(() => {
@@ -1287,6 +1561,49 @@ export const CaseSyncProvider: React.FC<{ children: React.ReactNode }> = ({
       );
     }
 
+    // Update associated overlap alert lifecycle when officer reviews overlap
+    setAlerts((prev) =>
+      prev.map((a) => {
+        const matchesRel =
+          a.deduplication_key === `rel:${relationId}` ||
+          ((a.alert_type === 'Potential Overlapping Cases' ||
+            a.alert_type === 'Institution Identity Verification') &&
+            a.case_ids.includes(targetRel.case_id_a) &&
+            a.case_ids.includes(targetRel.case_id_b));
+        if (!matchesRel) return a;
+        if (decision === 'Not Related — Reviewed') {
+          return {
+            ...a,
+            acknowledgement_status: 'Acknowledged',
+            resolution_status: 'Resolved',
+            lifecycle_status: 'Resolved',
+            resolved_by: roleProfile.displayName,
+            resolved_at: now,
+            resolution_reason: `Reviewed as separate unrelated matters: ${remarks.trim()}`,
+          };
+        }
+        if (decision === 'Confirmed Related Cases') {
+          return {
+            ...a,
+            acknowledgement_status: 'Acknowledged',
+            resolution_status: 'Resolved',
+            lifecycle_status: 'Resolved',
+            acknowledged_by: roleProfile.displayName,
+            resolved_by: roleProfile.displayName,
+            resolved_at: now,
+            assigned_to: coordinationOwner?.trim() || a.assigned_to,
+            resolution_reason: `Relationship confirmed by ${roleProfile.displayName}; linked for cross-Bureau coordination.`,
+          };
+        }
+        return {
+          ...a,
+          acknowledgement_status: 'Acknowledged',
+          lifecycle_status: 'Acknowledged',
+          acknowledged_by: roleProfile.displayName,
+        };
+      })
+    );
+
     setLastUpdatedAt(now);
     addToast(
       `Overlap Decision Recorded (${decision})`,
@@ -1361,6 +1678,28 @@ export const CaseSyncProvider: React.FC<{ children: React.ReactNode }> = ({
         };
       })
     );
+
+    if (updates.status === 'Resolved') {
+      setAlerts((prev) =>
+        prev.map((a) =>
+          a.deduplication_key === `crd:${coordinationId}` ||
+          (a.alert_type === 'Cases Awaiting Bureau Coordination' &&
+            a.institution_id === target.institution_id)
+            ? {
+                ...a,
+                acknowledgement_status: 'Acknowledged',
+                resolution_status: 'Resolved',
+                lifecycle_status: 'Resolved',
+                resolved_by: roleProfile.displayName,
+                resolved_at: now,
+                resolution_reason:
+                  updates.remark?.trim() ||
+                  'Inter-Bureau coordination completed.',
+              }
+            : a
+        )
+      );
+    }
 
     setLastUpdatedAt(now);
     addToast(
@@ -1442,12 +1781,14 @@ export const CaseSyncProvider: React.FC<{ children: React.ReactNode }> = ({
     );
 
     const newAlert: AlertRecord = {
-      alert_id: `ALT-TRF-${Date.now()}`,
+      alert_id: `ALT-${transferId}`,
+      title: `Transfer ${transferId} Awaiting Acceptance by ${payload.receivingBureau}`,
       alert_type: 'Cases Pending Transfer Acceptance',
       case_ids: [targetCase.id],
       institution_id: targetCase.institution_id,
       institution_name: targetCase.institutionName,
       aicte_permanent_id: targetCase.aicte_permanent_id,
+      region: targetCase.region,
       bureaus: [targetCase.current_bureau, payload.receivingBureau],
       severity: 'High',
       reason: `Transfer ${transferId} from ${targetCase.current_bureau} to ${payload.receivingBureau} is awaiting formal acceptance.`,
@@ -1455,6 +1796,9 @@ export const CaseSyncProvider: React.FC<{ children: React.ReactNode }> = ({
       created_at: now,
       due_at: targetCase.expected_disposal_at,
       assigned_to: newTransfer.receiving_officer,
+      is_read: false,
+      lifecycle_status: 'Active',
+      deduplication_key: `trf:${transferId}`,
       acknowledgement_status: 'Unacknowledged',
       resolution_status: 'Open',
     };
@@ -1537,6 +1881,25 @@ export const CaseSyncProvider: React.FC<{ children: React.ReactNode }> = ({
       })
     );
 
+    // Resolve the pending transfer acceptance alert
+    setAlerts((prev) =>
+      prev.map((a) =>
+        a.deduplication_key === `trf:${transferId}` ||
+        (a.alert_type === 'Cases Pending Transfer Acceptance' &&
+          a.case_ids.includes(trf.case_id))
+          ? {
+              ...a,
+              acknowledgement_status: 'Acknowledged',
+              resolution_status: 'Resolved',
+              lifecycle_status: 'Resolved',
+              resolved_by: roleProfile.displayName,
+              resolved_at: now,
+              resolution_reason: `Transfer ${transferId} ${decision}: ${remarks.trim() || 'Handoff processed.'}`,
+            }
+          : a
+      )
+    );
+
     setLastUpdatedAt(now);
     addToast(
       `Transfer ${transferId}: ${decision}`,
@@ -1613,10 +1976,34 @@ export const CaseSyncProvider: React.FC<{ children: React.ReactNode }> = ({
       })
     );
 
+    const newEscAlert: AlertRecord = {
+      alert_id: `ALT-${escId}`,
+      title: `${payload.escalationLevel} Escalation (${escId}) — ${targetCase.id}`,
+      alert_type: 'Escalation Awaiting Action',
+      case_ids: [targetCase.id],
+      institution_id: targetCase.institution_id,
+      institution_name: targetCase.institutionName,
+      aicte_permanent_id: targetCase.aicte_permanent_id,
+      region: targetCase.region,
+      bureaus: [targetCase.current_bureau],
+      severity: 'Critical',
+      reason: payload.reason.trim(),
+      recommended_action: payload.requiredNextAction.trim(),
+      created_at: now,
+      due_at: targetCase.expected_disposal_at,
+      assigned_to: payload.responsibleAuthority.trim(),
+      is_read: false,
+      lifecycle_status: 'Active',
+      deduplication_key: `esc:${escId}`,
+      acknowledgement_status: 'Unacknowledged',
+      resolution_status: 'Open',
+    };
+    setAlerts((prev) => [newEscAlert, ...prev]);
+
     setLastUpdatedAt(now);
     addToast(
       `Case ${payload.caseId} Escalated`,
-      `Logged ${escId} for ${payload.responsibleAuthority}.`
+      `Logged ${escId} and generated senior authority alert for ${payload.responsibleAuthority}.`
     );
     return true;
   };
@@ -1667,10 +2054,79 @@ export const CaseSyncProvider: React.FC<{ children: React.ReactNode }> = ({
       })
     );
 
+    setAlerts((prev) =>
+      prev.map((a) =>
+        a.deduplication_key === `esc:${escalationId}` ||
+        (a.alert_type === 'Escalation Awaiting Action' &&
+          a.case_ids.includes(esc.case_id))
+          ? {
+              ...a,
+              acknowledgement_status: 'Acknowledged',
+              resolution_status: 'Resolved',
+              lifecycle_status: 'Resolved',
+              resolved_by: roleProfile.displayName,
+              resolved_at: now,
+              resolution_reason: `Escalation ${escalationId} resolved: ${remarks.trim() || 'Directive issued.'}`,
+            }
+          : a
+      )
+    );
+
     setLastUpdatedAt(now);
     addToast(
       `Escalation ${escalationId} Resolved`,
-      'Case returned to Under Process.'
+      'Case returned to Under Process and escalation alert resolved.'
+    );
+    return true;
+  };
+
+  // Notification read state is strictly separate from alert resolution/dismissal
+  const markAlertRead = (alertId: string, isRead = true) => {
+    setAlerts((prev) =>
+      prev.map((a) => (a.alert_id === alertId ? { ...a, is_read: isRead } : a))
+    );
+  };
+
+  const markAllAlertsRead = () => {
+    setAlerts((prev) => prev.map((a) => ({ ...a, is_read: true })));
+    addToast(
+      'Notifications Marked as Read',
+      'All visible notifications marked as read. Underlying operational alerts remain active until resolved.',
+      'info'
+    );
+  };
+
+  const assignAlertItem = (alertId: string, assignee: string): boolean => {
+    if (!hasPermission('update_case_status')) {
+      addToast(
+        'Permission Denied',
+        `${activeRole} cannot reassign operational alerts.`,
+        'warning'
+      );
+      return false;
+    }
+    const cleanAssignee = assignee.trim();
+    if (!cleanAssignee) return false;
+
+    setAlerts((prev) =>
+      prev.map((a) =>
+        a.alert_id === alertId
+          ? {
+              ...a,
+              assigned_to: cleanAssignee,
+              acknowledgement_status: 'Acknowledged',
+              lifecycle_status:
+                a.resolution_status === 'Open' ? 'Assigned' : a.lifecycle_status,
+              acknowledged_by: roleProfile.displayName,
+              is_read: true,
+            }
+          : a
+      )
+    );
+
+    addToast(
+      `Alert ${alertId} Assigned`,
+      `Assigned to ${cleanAssignee} for operational follow-up.`
     );
     return true;
   };
@@ -1689,28 +2145,82 @@ export const CaseSyncProvider: React.FC<{ children: React.ReactNode }> = ({
       return false;
     }
 
+    if (action === 'dismiss' && !reason?.trim()) {
+      addToast(
+        'Dismissal Reason Required',
+        'Please provide a brief audit justification before dismissing an operational alert.',
+        'warning'
+      );
+      return false;
+    }
+
+    const now = new Date().toISOString();
+    const targetAlert = allAlerts.find((a) => a.alert_id === alertId);
+
     setAlerts((prev) =>
       prev.map((a) => {
         if (a.alert_id !== alertId) return a;
         if (action === 'acknowledge') {
-          return { ...a, acknowledgement_status: 'Acknowledged' };
+          return {
+            ...a,
+            is_read: true,
+            acknowledgement_status: 'Acknowledged',
+            lifecycle_status: 'Acknowledged',
+            acknowledged_by: roleProfile.displayName,
+          };
         }
         if (action === 'resolve') {
           return {
             ...a,
+            is_read: true,
             acknowledgement_status: 'Acknowledged',
             resolution_status: 'Resolved',
+            lifecycle_status: 'Resolved',
+            resolved_by: roleProfile.displayName,
+            resolved_at: now,
+            resolution_reason:
+              reason?.trim() || `Resolved by ${roleProfile.displayName}.`,
           };
         }
         return {
           ...a,
+          is_read: true,
           acknowledgement_status: 'Acknowledged',
           resolution_status: 'Dismissed',
-          dismiss_reason:
-            reason?.trim() || 'Reviewed and dismissed by officer.',
+          lifecycle_status: 'Dismissed',
+          resolved_by: roleProfile.displayName,
+          resolved_at: now,
+          dismiss_reason: reason!.trim(),
+          resolution_reason: reason!.trim(),
         };
       })
     );
+
+    // Record an audit event in the associated case timeline when an alert is resolved or dismissed
+    if (targetAlert && targetAlert.case_ids.length > 0 && action !== 'acknowledge') {
+      const primaryCaseId = targetAlert.case_ids[0];
+      setCases((prev) =>
+        prev.map((c) => {
+          if (c.id !== primaryCaseId) return c;
+          const evt: CaseAction = {
+            action_id: `ACT-${Date.now()}-alt`,
+            case_id: c.id,
+            institution_id: c.institution_id,
+            actor: roleProfile.displayName,
+            actor_role: activeRole,
+            bureau: c.current_bureau,
+            action_type: 'Action Remark Added',
+            remarks: `Alert ${alertId} (${targetAlert.alert_type}) marked as ${action === 'resolve' ? 'Resolved' : 'Dismissed'}: ${reason?.trim() || 'Operational review completed.'}`,
+            timestamp: now,
+            reference_id: alertId,
+          };
+          return {
+            ...c,
+            timeline: [...c.timeline, evt],
+          };
+        })
+      );
+    }
 
     addToast(
       `Alert ${alertId} Updated`,
@@ -1822,6 +2332,9 @@ export const CaseSyncProvider: React.FC<{ children: React.ReactNode }> = ({
         escalateCase,
         resolveEscalation,
         updateAlertItem,
+        markAlertRead,
+        markAllAlertsRead,
+        assignAlertItem,
         saveSystemSettings,
         resetDemoData,
       }}

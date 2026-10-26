@@ -52,7 +52,15 @@ export type AlertType =
   | 'Overdue Case'
   | 'Cases Awaiting Bureau Coordination'
   | 'Cases Pending Transfer Acceptance'
-  | 'Cases Requiring Senior Review';
+  | 'Cases Requiring Senior Review'
+  | 'Escalation Awaiting Action';
+
+export type AlertLifecycleStatus =
+  | 'Active'
+  | 'Acknowledged'
+  | 'Assigned'
+  | 'Resolved'
+  | 'Dismissed';
 
 export type UserRole =
   | 'Administrator'
@@ -268,18 +276,27 @@ export interface EscalationRecord {
 
 export interface AlertRecord {
   alert_id: string;
+  title?: string;
   alert_type: AlertType;
   case_ids: string[];
   institution_id: string;
   institution_name: string;
   aicte_permanent_id: string;
+  region?: RegionName;
   bureaus: BureauCell[];
-  severity: 'Critical' | 'High' | 'Medium';
+  severity: 'Critical' | 'High' | 'Medium' | 'Low';
   reason: string;
   recommended_action: string;
   created_at: string;
   due_at: string;
   assigned_to: string;
+  is_read?: boolean;
+  lifecycle_status?: AlertLifecycleStatus;
+  deduplication_key?: string;
+  acknowledged_by?: string;
+  resolved_by?: string;
+  resolved_at?: string;
+  resolution_reason?: string;
   acknowledgement_status: 'Unacknowledged' | 'Acknowledged';
   resolution_status: 'Open' | 'Resolved' | 'Dismissed';
   dismiss_reason?: string;

@@ -1,12 +1,16 @@
-import React, { useMemo, useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
+  AlertTriangle,
+  ArrowRight,
   ArrowRightLeft,
   BarChart3,
   Bell,
   Building2,
+  CheckCheck,
   ChevronLeft,
   ChevronRight,
+  Clock,
   FolderKanban,
   GitCompare,
   Globe,
@@ -24,7 +28,7 @@ import {
   X,
 } from 'lucide-react';
 import { useCaseSync } from '../context/CaseSyncContext';
-import { WorkspaceScreen } from '../types/casesync';
+import { AlertRecord, WorkspaceScreen } from '../types/casesync';
 import { AnalyticsView } from './views/AnalyticsView';
 import { CaseDetailsView } from './views/CaseDetailsView';
 import { CaseManagementView } from './views/CaseManagementView';
@@ -73,12 +77,76 @@ export const WorkspaceApp: React.FC = () => {
     selectedCase,
     openInstitutionProfile,
     openCaseDetail,
+    markAlertRead,
+    markAllAlertsRead,
   } = useCaseSync();
+
+  const prefersReducedMotion = useReducedMotion();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  const notificationRef = useRef<HTMLDivElement | null>(null);
+
+  // Synchronize activeScreen with browser history (back/forward navigation)
+  useEffect(() => {
+    try {
+      const currentState = window.history.state;
+      if (!currentState || currentState.workspaceScreen !== activeScreen) {
+        window.history.pushState(
+          { workspaceScreen: activeScreen },
+          '',
+          `#${activeScreen}`
+        );
+      }
+    } catch {
+      // ignore iframe history restrictions
+    }
+  }, [activeScreen]);
+
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const targetScreen = event.state?.workspaceScreen as
+        | WorkspaceScreen
+        | undefined;
+      if (targetScreen && roleProfile.allowedScreens.includes(targetScreen)) {
+        setActiveScreen(targetScreen);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [roleProfile.allowedScreens, setActiveScreen]);
+
+  // Close Notifications Popover and Mobile Drawer on Escape or outside click
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setNotificationsOpen(false);
+        setMobileMenuOpen(false);
+        setSearchFocused(false);
+      }
+    };
+
+    const handleMouseDown = (event: MouseEvent) => {
+      if (
+        notificationsOpen &&
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target as Node)
+      ) {
+        setNotificationsOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleMouseDown);
+    };
+  }, [notificationsOpen]);
 
   const pendingOverlapsCount = relations.filter(
     (r) =>
@@ -96,9 +164,37 @@ export const WorkspaceApp: React.FC = () => {
       t.transfer_status === 'Transfer Requested'
   ).length;
 
+  // Sidebar badge shows unresolved active alerts count
   const openAlertsCount = alerts.filter(
     (a) => a.resolution_status === 'Open'
   ).length;
+
+  // Top-bar Bell badge shows unread notification count
+  const unreadNotificationsCount = alerts.filter(
+    (a) => !a.is_read && a.resolution_status !== 'Dismissed'
+  ).length;
+
+  const hasUrgentUnread = alerts.some(
+    (a) =>
+      !a.is_read &&
+      a.resolution_status === 'Open' &&
+      a.severity === 'Critical'
+  );
+
+  // Recent notifications sorted with unread + critical first, then by created_at
+  const recentNotifications = useMemo(() => {
+    return [...alerts]
+      .filter((a) => a.resolution_status !== 'Dismissed')
+      .sort((a, b) => {
+        if (Boolean(a.is_read) !== Boolean(b.is_read)) {
+          return a.is_read ? 1 : -1;
+        }
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      })
+      .slice(0, 8);
+  }, [alerts]);
 
   const allNavItems: NavItem[] = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -149,8 +245,28 @@ export const WorkspaceApp: React.FC = () => {
       allNavItems.filter((item) =>
         roleProfile.allowedScreens.includes(item.id)
       ),
-    [roleProfile, institutions.length, cases.length, pendingOverlapsCount, activeCoordCount, pendingTransfersCount, openAlertsCount]
+    [
+      roleProfile,
+      institutions.length,
+      cases.length,
+      pendingOverlapsCount,
+      activeCoordCount,
+      pendingTransfersCount,
+      openAlertsCount,
+    ]
   );
+
+  // Determine whether a sidebar item is active (including parent-section highlighting for nested detail pages)
+  const isNavItemActive = (itemId: WorkspaceScreen): boolean => {
+    if (activeScreen === itemId) return true;
+    if (itemId === 'institutions' && activeScreen === 'institution-detail') {
+      return true;
+    }
+    if (itemId === 'cases' && activeScreen === 'case-detail') {
+      return true;
+    }
+    return false;
+  };
 
   // Global search results across visible Institutions and Cases
   const globalSearchResults = useMemo(() => {
@@ -215,14 +331,64 @@ export const WorkspaceApp: React.FC = () => {
   const handleSelectNav = (id: WorkspaceScreen) => {
     setActiveScreen(id);
     setMobileMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setNotificationsOpen(false);
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  };
+
+  // Navigate to the relevant record from a notification item and mark it as read (without resolving the alert)
+  const handleNotificationNavigate = (alert: AlertRecord) => {
+    markAlertRead(alert.alert_id, true);
+    setNotificationsOpen(false);
+
+    if (
+      alert.alert_type === 'Potential Overlapping Cases' ||
+      alert.alert_type === 'Institution Identity Verification'
+    ) {
+      if (roleProfile.allowedScreens.includes('overlaps')) {
+        setActiveScreen('overlaps');
+      } else if (alert.case_ids[0]) {
+        openCaseDetail(alert.case_ids[0]);
+      }
+      return;
+    }
+
+    if (
+      alert.alert_type === 'Cases Pending Transfer Acceptance' ||
+      alert.alert_type === 'Escalation Awaiting Action'
+    ) {
+      if (roleProfile.allowedScreens.includes('transfers')) {
+        setActiveScreen('transfers');
+      } else if (alert.case_ids[0]) {
+        openCaseDetail(alert.case_ids[0]);
+      }
+      return;
+    }
+
+    if (alert.alert_type === 'Cases Awaiting Bureau Coordination') {
+      if (roleProfile.allowedScreens.includes('coordination')) {
+        setActiveScreen('coordination');
+      } else if (alert.case_ids[0]) {
+        openCaseDetail(alert.case_ids[0]);
+      }
+      return;
+    }
+
+    if (alert.case_ids.length > 0) {
+      openCaseDetail(alert.case_ids[0]);
+      return;
+    }
+
+    if (alert.institution_id) {
+      openInstitutionProfile(alert.institution_id);
+    }
   };
 
   return (
     <div className="min-h-screen neu-shell flex flex-col lg:flex-row overflow-x-hidden">
-      {/* Desktop Persistent Sidebar */}
+      {/* Desktop Persistent Sidebar — Fixed width transition only, never shifts or re-animates on route change */}
       <aside
-        className={`hidden lg:flex flex-col justify-between neu-sidebar border-r border-theme shrink-0 transition-all duration-200 sticky top-0 h-screen z-30 ${
+        aria-label="Primary Workspace Navigation"
+        className={`hidden lg:flex flex-col justify-between neu-sidebar border-r border-theme shrink-0 transition-[width] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] sticky top-0 h-screen z-30 ${
           sidebarCollapsed ? 'w-20' : 'w-68'
         }`}
       >
@@ -231,7 +397,7 @@ export const WorkspaceApp: React.FC = () => {
           <div className="flex items-center justify-between gap-2 px-1">
             <button
               onClick={() => handleSelectNav('overview')}
-              className="flex items-center gap-2.5 text-left cursor-pointer"
+              className="flex items-center gap-2.5 text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3478F6] rounded-xl"
             >
               <div className="w-9 h-9 rounded-xl neu-btn-primary flex items-center justify-center font-bold text-sm shrink-0">
                 CS
@@ -250,8 +416,9 @@ export const WorkspaceApp: React.FC = () => {
 
             <button
               onClick={() => setSidebarCollapsed((prev) => !prev)}
-              className="p-1.5 rounded-lg text-theme-muted hover:text-theme-primary cursor-pointer"
+              className="p-1.5 rounded-lg text-theme-muted hover:text-theme-primary cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3478F6]"
               title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               {sidebarCollapsed ? (
                 <ChevronRight className="w-4 h-4" />
@@ -261,41 +428,55 @@ export const WorkspaceApp: React.FC = () => {
             </button>
           </div>
 
-          {/* Role-Filtered Navigation Items */}
-          <nav className="space-y-1">
+          {/* Role-Filtered Navigation Items with Left-Edge Vertical Accent Indicator */}
+          <nav aria-label="Workspace Sections" className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive =
-                activeScreen === item.id ||
-                (item.id === 'institutions' &&
-                  activeScreen === 'institution-detail') ||
-                (item.id === 'cases' && activeScreen === 'case-detail');
+              const isActive = isNavItemActive(item.id);
 
               return (
                 <button
                   key={item.id}
                   onClick={() => handleSelectNav(item.id)}
+                  aria-current={isActive ? 'page' : undefined}
                   title={sidebarCollapsed ? item.label : undefined}
-                  className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  className={`group relative overflow-hidden w-full flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl text-xs transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3478F6] ${
                     isActive
-                      ? 'neu-btn-primary shadow-sm'
-                      : 'text-theme-secondary hover:text-theme-primary hover:bg-[var(--bg-elevated)]'
+                      ? 'bg-[#3478F6]/12 dark:bg-[#6EA1FF]/16 text-[#3478F6] dark:text-[#6EA1FF] font-bold border border-[#3478F6]/30 dark:border-[#6EA1FF]/30 shadow-xs'
+                      : 'font-semibold text-theme-secondary border border-transparent hover:text-theme-primary hover:bg-[var(--bg-elevated)]'
                   }`}
                 >
+                  {/* Slim 3.5px Left-Edge Vertical Accent Bar on Active Item */}
+                  <span
+                    aria-hidden="true"
+                    className={`absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-gradient-to-b from-[#3478F6] to-[#4338F5] transition-opacity duration-200 ${
+                      isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-30'
+                    }`}
+                  />
+
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <Icon className="w-4 h-4 shrink-0" />
+                    <Icon
+                      className={`w-4 h-4 shrink-0 transition-colors duration-200 ${
+                        isActive
+                          ? 'text-[#3478F6] dark:text-[#6EA1FF]'
+                          : 'text-theme-secondary group-hover:text-theme-primary'
+                      }`}
+                    />
                     {!sidebarCollapsed && (
                       <span className="truncate">{item.label}</span>
                     )}
                   </div>
+
                   {!sidebarCollapsed &&
                     item.badge !== undefined &&
                     item.badge > 0 && (
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-mono-tabular font-bold shrink-0 ${
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-mono-tabular font-bold shrink-0 transition-colors duration-200 ${
                           isActive
-                            ? 'bg-white/20 text-white'
-                            : 'bg-[var(--bg-inset)] text-theme-primary'
+                            ? 'bg-[#3478F6] text-white'
+                            : item.id === 'alerts'
+                              ? 'bg-[var(--status-critical)]/15 text-[var(--status-critical)]'
+                              : 'bg-[var(--bg-inset)] text-theme-primary'
                         }`}
                       >
                         {item.badge}
@@ -346,48 +527,79 @@ export const WorkspaceApp: React.FC = () => {
         </div>
       </aside>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer — Matches Desktop Active Indicator & Parent Highlighting */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden bg-black/50 backdrop-blur-xs flex">
-          <div className="w-72 max-w-[85vw] neu-sidebar h-full p-4 flex flex-col justify-between overflow-y-auto">
+        <div
+          className="fixed inset-0 z-50 lg:hidden bg-black/50 backdrop-blur-xs flex"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <div
+            className="w-72 max-w-[85vw] neu-sidebar h-full p-4 flex flex-col justify-between overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-xl neu-btn-primary flex items-center justify-center font-bold text-xs">
                     CS
                   </div>
-                  <span className="font-bold text-sm text-theme-primary">
-                    AICTE CaseSync
-                  </span>
+                  <div>
+                    <span className="font-bold text-sm text-theme-primary block leading-none">
+                      AICTE CaseSync
+                    </span>
+                    <span className="text-[10px] font-semibold text-theme-blue">
+                      Institution Monitoring
+                    </span>
+                  </div>
                 </div>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-1.5 rounded-lg text-theme-muted"
+                  className="p-1.5 rounded-lg text-theme-muted hover:text-theme-primary"
+                  aria-label="Close navigation menu"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <nav className="space-y-1">
+              <nav aria-label="Mobile Workspace Sections" className="space-y-1">
                 {navItems.map((item) => {
                   const Icon = item.icon;
-                  const isActive = activeScreen === item.id;
+                  const isActive = isNavItemActive(item.id);
                   return (
                     <button
                       key={item.id}
                       onClick={() => handleSelectNav(item.id)}
-                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold ${
+                      aria-current={isActive ? 'page' : undefined}
+                      className={`group relative overflow-hidden w-full flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl text-xs transition-colors duration-200 ${
                         isActive
-                          ? 'neu-btn-primary'
-                          : 'text-theme-secondary'
+                          ? 'bg-[#3478F6]/12 dark:bg-[#6EA1FF]/16 text-[#3478F6] dark:text-[#6EA1FF] font-bold border border-[#3478F6]/30 dark:border-[#6EA1FF]/30 shadow-xs'
+                          : 'font-semibold text-theme-secondary border border-transparent hover:text-theme-primary hover:bg-[var(--bg-elevated)]'
                       }`}
                     >
-                      <div className="flex items-center gap-2.5">
-                        <Icon className="w-4 h-4" />
-                        <span>{item.label}</span>
+                      <span
+                        aria-hidden="true"
+                        className={`absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-gradient-to-b from-[#3478F6] to-[#4338F5] transition-opacity duration-200 ${
+                          isActive ? 'opacity-100' : 'opacity-0'
+                        }`}
+                      />
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Icon
+                          className={`w-4 h-4 shrink-0 ${
+                            isActive
+                              ? 'text-[#3478F6] dark:text-[#6EA1FF]'
+                              : 'text-theme-secondary'
+                          }`}
+                        />
+                        <span className="truncate">{item.label}</span>
                       </div>
                       {item.badge !== undefined && item.badge > 0 && (
-                        <span className="text-[10px] font-mono-tabular px-2 py-0.5 rounded-full bg-black/10">
+                        <span
+                          className={`text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                            isActive
+                              ? 'bg-[#3478F6] text-white'
+                              : 'bg-[var(--bg-inset)] text-theme-primary'
+                          }`}
+                        >
                           {item.badge}
                         </span>
                       )}
@@ -398,6 +610,14 @@ export const WorkspaceApp: React.FC = () => {
             </div>
 
             <div className="space-y-2 pt-3 border-t border-theme">
+              <div className="neu-inset rounded-xl p-2.5 text-xs mb-1">
+                <div className="text-[10px] font-bold uppercase text-theme-blue">
+                  Active Role
+                </div>
+                <div className="font-bold text-theme-primary truncate">
+                  {roleProfile.shortLabel}
+                </div>
+              </div>
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
@@ -423,7 +643,7 @@ export const WorkspaceApp: React.FC = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Sticky Top Navigation Bar */}
+        {/* Sticky Top Navigation Bar — Remains stationary during section switches */}
         <header className="sticky top-0 z-20 neu-sidebar border-b border-theme px-4 sm:px-6 py-3">
           <div className="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-3">
             {/* Left: Mobile Menu Button + Breadcrumb */}
@@ -546,23 +766,228 @@ export const WorkspaceApp: React.FC = () => {
               )}
             </div>
 
-            {/* Right Controls: Alerts Bell + Theme Toggle + Active User & Switch Role */}
+            {/* Right Controls: Notification Bell + Popover + Theme Toggle + Active User & Switch Role */}
             <div className="flex items-center gap-2">
-              {roleProfile.allowedScreens.includes('alerts') && (
+              <div className="relative" ref={notificationRef}>
                 <button
-                  onClick={() => handleSelectNav('alerts')}
-                  className="neu-btn-secondary p-2 rounded-xl relative cursor-pointer"
-                  title="Open Alerts & SLA Notifications"
-                  aria-label="Open Alerts & SLA Notifications"
+                  onClick={() => setNotificationsOpen((prev) => !prev)}
+                  aria-expanded={notificationsOpen}
+                  aria-haspopup="dialog"
+                  className={`neu-btn-secondary p-2 rounded-xl relative cursor-pointer ${
+                    notificationsOpen
+                      ? 'border-[#3478F6] text-[#3478F6]'
+                      : ''
+                  }`}
+                  title={`Notifications (${unreadNotificationsCount} unread • ${openAlertsCount} active alerts)`}
+                  aria-label={`Notifications (${unreadNotificationsCount} unread)`}
                 >
                   <Bell className="w-4 h-4 text-theme-primary" />
-                  {openAlertsCount > 0 && (
-                    <span className="w-4 h-4 rounded-full bg-[var(--status-critical)] text-white text-[10px] font-bold flex items-center justify-center absolute -top-1 -right-1">
-                      {openAlertsCount}
+                  {unreadNotificationsCount > 0 && (
+                    <span className="min-w-4 h-4 px-1 rounded-full bg-[var(--status-critical)] text-white text-[10px] font-mono-tabular font-bold flex items-center justify-center absolute -top-1 -right-1 shadow-xs">
+                      {unreadNotificationsCount}
                     </span>
                   )}
+                  {hasUrgentUnread && (
+                    <span
+                      aria-hidden="true"
+                      className="w-2 h-2 rounded-full bg-[var(--status-critical)] absolute bottom-1 right-1 ring-2 ring-[var(--bg-sidebar)]"
+                    />
+                  )}
                 </button>
-              )}
+
+                {/* Top-Bar Notifications Popover */}
+                <AnimatePresence>
+                  {notificationsOpen && (
+                    <motion.div
+                      role="dialog"
+                      aria-label="Recent Operational Notifications"
+                      initial={
+                        prefersReducedMotion
+                          ? { opacity: 0 }
+                          : { opacity: 0, y: 6, scale: 0.98 }
+                      }
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={
+                        prefersReducedMotion
+                          ? { opacity: 0 }
+                          : { opacity: 0, y: 4, scale: 0.98 }
+                      }
+                      transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+                      className="fixed sm:absolute right-3 sm:right-0 top-16 sm:top-full sm:mt-2.5 w-[calc(100vw-1.5rem)] sm:w-[410px] neu-card rounded-2xl shadow-2xl z-50 overflow-hidden border border-theme"
+                    >
+                      {/* Popover Header */}
+                      <div className="px-4 py-3 border-b border-theme bg-[var(--bg-elevated)] flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <Bell className="w-4 h-4 text-theme-blue" />
+                          <span className="font-bold text-xs sm:text-sm text-theme-primary">
+                            Notifications
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono-tabular font-bold bg-[#3478F6]/12 text-theme-blue">
+                            {unreadNotificationsCount} unread
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {unreadNotificationsCount > 0 && (
+                            <button
+                              onClick={markAllAlertsRead}
+                              className="text-[11px] font-semibold text-theme-blue hover:underline inline-flex items-center gap-1 cursor-pointer"
+                              title="Mark all notifications as read (does not resolve underlying alerts)"
+                            >
+                              <CheckCheck className="w-3.5 h-3.5" />
+                              Mark all read
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setNotificationsOpen(false)}
+                            className="p-1 rounded-lg text-theme-muted hover:text-theme-primary cursor-pointer"
+                            aria-label="Close notifications popover"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Scrollable Notification List */}
+                      <div className="max-h-[380px] overflow-y-auto divide-y divide-[var(--border-subtle)]">
+                        {recentNotifications.length === 0 ? (
+                          <div className="p-6 text-center text-xs text-theme-muted space-y-1">
+                            <div className="font-bold text-theme-primary">
+                              No notifications in current role scope
+                            </div>
+                            <p>
+                              Cross-Bureau overlaps, approaching SLA deadlines, and transfer handoffs will appear here.
+                            </p>
+                          </div>
+                        ) : (
+                          recentNotifications.map((item) => {
+                            const isUnread = !item.is_read;
+                            return (
+                              <div
+                                key={item.alert_id}
+                                className={`p-3.5 text-xs transition-colors ${
+                                  isUnread
+                                    ? 'bg-[#3478F6]/[0.05] dark:bg-[#6EA1FF]/[0.07]'
+                                    : 'bg-transparent hover:bg-[var(--bg-elevated)]'
+                                }`}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex flex-wrap items-center gap-1.5">
+                                    <button
+                                      onClick={() =>
+                                        markAlertRead(item.alert_id, !item.is_read)
+                                      }
+                                      title={
+                                        isUnread
+                                          ? 'Unread notification — click to mark read'
+                                          : 'Read notification — click to mark unread'
+                                      }
+                                      className={`w-2 h-2 rounded-full shrink-0 cursor-pointer ${
+                                        isUnread
+                                          ? 'bg-[#3478F6]'
+                                          : 'bg-transparent border border-[var(--text-muted)]'
+                                      }`}
+                                    />
+                                    <span
+                                      className={`px-1.5 py-0.5 rounded font-bold text-[10px] ${
+                                        item.severity === 'Critical'
+                                          ? 'bg-[var(--status-critical)]/15 text-[var(--status-critical)]'
+                                          : item.severity === 'High'
+                                            ? 'bg-[var(--status-warning)]/15 text-[var(--status-warning)]'
+                                            : 'bg-[#3478F6]/15 text-theme-blue'
+                                      }`}
+                                    >
+                                      {item.severity}
+                                    </span>
+                                    <span className="font-semibold text-[11px] text-theme-secondary">
+                                      {item.alert_type}
+                                    </span>
+                                  </div>
+
+                                  <span className="font-mono-tabular text-[10px] text-theme-muted shrink-0 inline-flex items-center gap-1">
+                                    <Clock className="w-2.5 h-2.5" />
+                                    {new Date(item.created_at).toLocaleDateString(
+                                      'en-IN',
+                                      {
+                                        day: '2-digit',
+                                        month: 'short',
+                                      }
+                                    )}
+                                  </span>
+                                </div>
+
+                                <div className="mt-1.5 font-bold text-theme-primary leading-snug">
+                                  {item.title || item.reason}
+                                </div>
+
+                                <div className="mt-1 text-[11px] text-theme-secondary line-clamp-2">
+                                  {item.institution_name} ({item.aicte_permanent_id})
+                                </div>
+
+                                <div className="mt-2.5 flex items-center justify-between gap-2">
+                                  <div className="flex flex-wrap items-center gap-1">
+                                    {item.case_ids.map((cid) => (
+                                      <button
+                                        key={cid}
+                                        onClick={() => {
+                                          markAlertRead(item.alert_id, true);
+                                          setNotificationsOpen(false);
+                                          openCaseDetail(cid);
+                                        }}
+                                        className="px-1.5 py-0.5 rounded bg-[var(--bg-elevated)] border border-theme font-mono-tabular font-bold text-[10px] text-theme-blue hover:underline cursor-pointer"
+                                      >
+                                        {cid}
+                                      </button>
+                                    ))}
+                                    <span className="text-[10px] text-theme-muted">
+                                      • {item.lifecycle_status || item.resolution_status}
+                                    </span>
+                                  </div>
+
+                                  <button
+                                    onClick={() => handleNotificationNavigate(item)}
+                                    className="font-bold text-[11px] text-theme-blue hover:underline inline-flex items-center gap-1 cursor-pointer shrink-0"
+                                  >
+                                    {item.alert_type ===
+                                      'Potential Overlapping Cases' ||
+                                    item.alert_type ===
+                                      'Institution Identity Verification'
+                                      ? 'Review Overlap'
+                                      : item.alert_type ===
+                                          'Cases Pending Transfer Acceptance'
+                                        ? 'Review Transfer'
+                                        : item.alert_type ===
+                                            'Cases Awaiting Bureau Coordination'
+                                          ? 'Coordinate'
+                                          : 'Open Record'}
+                                    <ArrowRight className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+
+                      {/* Popover Footer */}
+                      <div className="px-4 py-2.5 border-t border-theme bg-[var(--bg-elevated)] flex items-center justify-between gap-2 text-xs">
+                        <span className="text-[11px] text-theme-muted inline-flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3 text-[var(--status-warning)]" />
+                          {openAlertsCount} active operational alerts
+                        </span>
+                        {roleProfile.allowedScreens.includes('alerts') && (
+                          <button
+                            onClick={() => handleSelectNav('alerts')}
+                            className="font-bold text-theme-blue hover:underline inline-flex items-center gap-1 cursor-pointer"
+                          >
+                            View All Alerts
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
               {/* Light / Dark Theme Toggle */}
               <button
@@ -636,9 +1061,9 @@ export const WorkspaceApp: React.FC = () => {
           </div>
         </div>
 
-        {/* Active Screen Container with Subtle Fade & Slide-Up Transitions */}
-        <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <AnimatePresence mode="wait">
+        {/* Active Screen Container with Controlled Horizontal Slide + Fade Transition */}
+        <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 overflow-x-hidden">
+          <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={
                 activeScreen === 'institution-detail'
@@ -647,10 +1072,23 @@ export const WorkspaceApp: React.FC = () => {
                     ? `case-detail-${selectedCase?.id}-${activeRole}`
                     : `${activeScreen}-${activeRole}`
               }
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              initial={
+                prefersReducedMotion
+                  ? { opacity: 1, x: 0 }
+                  : { opacity: 0, x: 10 }
+              }
+              animate={{ opacity: 1, x: 0 }}
+              exit={
+                prefersReducedMotion
+                  ? { opacity: 1, x: 0 }
+                  : { opacity: 0, x: -4 }
+              }
+              transition={
+                prefersReducedMotion
+                  ? { duration: 0 }
+                  : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }
+              }
+              className="w-full min-w-0"
             >
               {activeScreen === 'overview' && <DashboardView />}
               {activeScreen === 'institutions' && <InstitutionRegistryView />}
@@ -673,3 +1111,4 @@ export const WorkspaceApp: React.FC = () => {
     </div>
   );
 };
+

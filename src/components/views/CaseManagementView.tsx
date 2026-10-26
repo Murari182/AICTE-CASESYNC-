@@ -488,127 +488,153 @@ export const CaseManagementView: React.FC = () => {
           </div>
         </div>
 
-        {/* Date-Range Picker Controls (Date Created vs Last Activity) */}
-        <div className="pt-3 border-t border-[var(--border-subtle)] flex flex-col lg:flex-row lg:items-end justify-between gap-3">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 flex-1">
-            <div>
-              <label
-                htmlFor="date-filter-field"
-                className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1"
-              >
-                Timestamp Basis
-              </label>
-              <div className="relative">
-                <Calendar className="w-3.5 h-3.5 text-[var(--accent-blue)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <select
-                  id="date-filter-field"
-                  value={dateFilterField}
-                  onChange={(e) =>
-                    setDateFilterField(e.target.value as 'created' | 'activity')
-                  }
-                  className="neu-inset w-full pl-8 pr-2.5 py-2 rounded-xl text-xs font-semibold focus:outline-none"
-                >
-                  <option value="created">Date Created (Receipt Date)</option>
-                  <option value="activity">Last Activity (Updated)</option>
-                </select>
-              </div>
+        {/* Dedicated Date-Range Picker Component (Date Created vs Last Activity) */}
+        <div className="neu-elevated rounded-xl p-3.5 space-y-3 border border-[var(--border-subtle)]">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-[var(--accent-blue)]" />
+              <span className="text-xs font-bold text-[var(--text-primary)]">
+                Date-Range Filter
+              </span>
+              <span className="text-[11px] text-[var(--text-secondary)]">
+                Filter complaints by{' '}
+                <strong>
+                  {dateFilterField === 'created'
+                    ? 'Date Created (Receipt Date)'
+                    : 'Last Activity Timestamp'}
+                </strong>
+              </span>
             </div>
 
-            <div>
-              <label
-                htmlFor="filter-start-date"
-                className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1"
+            {/* Segmented Toggle for 'Date Created' vs 'Last Activity' */}
+            <div
+              role="group"
+              aria-label="Select timestamp field for date range filter"
+              className="neu-inset p-1 rounded-xl inline-flex items-center gap-1"
+            >
+              <button
+                type="button"
+                onClick={() => setDateFilterField('created')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  dateFilterField === 'created'
+                    ? 'neu-btn-primary text-white shadow-xs'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                }`}
               >
-                From Date
-              </label>
-              <input
-                id="filter-start-date"
-                type="date"
-                value={startDate}
-                max={endDate || undefined}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="neu-inset w-full px-3 py-2 rounded-xl text-xs font-mono focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="filter-end-date"
-                className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1"
+                Date Created
+              </button>
+              <button
+                type="button"
+                onClick={() => setDateFilterField('activity')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  dateFilterField === 'activity'
+                    ? 'neu-btn-primary text-white shadow-xs'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                }`}
               >
-                To Date
-              </label>
-              <input
-                id="filter-end-date"
-                type="date"
-                value={endDate}
-                min={startDate || undefined}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="neu-inset w-full px-3 py-2 rounded-xl text-xs font-mono focus:outline-none"
-              />
+                Last Activity
+              </button>
             </div>
           </div>
 
-          {/* Quick Date Range Presets */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mr-1">
-              Quick Range:
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                setStartDate('2026-10-23');
-                setEndDate('2026-10-26');
-              }}
-              className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
-                startDate === '2026-10-23' && endDate === '2026-10-26'
-                  ? 'neu-btn-primary'
-                  : 'neu-btn-secondary'
-              }`}
-            >
-              Last 3 Days
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setStartDate('2026-10-19');
-                setEndDate('2026-10-26');
-              }}
-              className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
-                startDate === '2026-10-19' && endDate === '2026-10-26'
-                  ? 'neu-btn-primary'
-                  : 'neu-btn-secondary'
-              }`}
-            >
-              Last 7 Days
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setStartDate('2026-10-01');
-                setEndDate('2026-10-31');
-              }}
-              className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
-                startDate === '2026-10-01' && endDate === '2026-10-31'
-                  ? 'neu-btn-primary'
-                  : 'neu-btn-secondary'
-              }`}
-            >
-              Oct 2026
-            </button>
-            {(startDate || endDate) && (
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 max-w-xl">
+              <div>
+                <label
+                  htmlFor="filter-start-date"
+                  className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1"
+                >
+                  Start Date ({dateFilterField === 'created' ? 'Date Created' : 'Last Activity'})
+                </label>
+                <input
+                  id="filter-start-date"
+                  type="date"
+                  value={startDate}
+                  max={endDate || undefined}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="neu-inset w-full px-3 py-2 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#3478F6]/30"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="filter-end-date"
+                  className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1"
+                >
+                  End Date ({dateFilterField === 'created' ? 'Date Created' : 'Last Activity'})
+                </label>
+                <input
+                  id="filter-end-date"
+                  type="date"
+                  value={endDate}
+                  min={startDate || undefined}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="neu-inset w-full px-3 py-2 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#3478F6]/30"
+                />
+              </div>
+            </div>
+
+            {/* Quick Date Range Presets */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mr-1">
+                Presets:
+              </span>
               <button
                 type="button"
                 onClick={() => {
-                  setStartDate('');
-                  setEndDate('');
+                  setStartDate('2026-10-23');
+                  setEndDate('2026-10-26');
                 }}
-                className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-[var(--status-critical)] bg-[var(--bg-elevated)] border border-[var(--border-subtle)] inline-flex items-center gap-1"
+                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+                  startDate === '2026-10-23' && endDate === '2026-10-26'
+                    ? 'neu-btn-primary'
+                    : 'neu-btn-secondary'
+                }`}
               >
-                <X className="w-3 h-3" />
-                Clear Dates
+                Last 3 Days
               </button>
-            )}
+              <button
+                type="button"
+                onClick={() => {
+                  setStartDate('2026-10-19');
+                  setEndDate('2026-10-26');
+                }}
+                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+                  startDate === '2026-10-19' && endDate === '2026-10-26'
+                    ? 'neu-btn-primary'
+                    : 'neu-btn-secondary'
+                }`}
+              >
+                Last 7 Days
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStartDate('2026-10-01');
+                  setEndDate('2026-10-31');
+                }}
+                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+                  startDate === '2026-10-01' && endDate === '2026-10-31'
+                    ? 'neu-btn-primary'
+                    : 'neu-btn-secondary'
+                }`}
+              >
+                Oct 2026
+              </button>
+              {(startDate || endDate) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStartDate('');
+                    setEndDate('');
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-[var(--status-critical)] bg-[var(--bg-elevated)] border border-[var(--border-subtle)] inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                  Clear Range
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

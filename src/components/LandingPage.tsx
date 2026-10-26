@@ -31,19 +31,67 @@ export const LandingPage: React.FC = () => {
     allCasesTotalCount,
   } = useCaseSync();
 
-  const scrollToSection = (id: string) => {
+  const [activeNav, setActiveNav] = React.useState<
+    'home' | 'problem-statement' | 'core-features' | 'how-it-works'
+  >('home');
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      const y = window.scrollY;
+      if (y < 260) {
+        setActiveNav('home');
+        return;
+      }
+      const sections: (
+        | 'problem-statement'
+        | 'core-features'
+        | 'how-it-works'
+      )[] = ['problem-statement', 'how-it-works', 'core-features'];
+      for (const id of sections) {
+        const el = document.getElementById(id);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= 180 && rect.bottom >= 140) {
+            setActiveNav(id);
+            break;
+          }
+        }
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToSection = (
+    id: 'home' | 'problem-statement' | 'core-features' | 'how-it-works'
+  ) => {
+    setActiveNav(id);
+    if (id === 'home') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const navLinks: {
+    id: 'home' | 'problem-statement' | 'core-features' | 'how-it-works';
+    label: string;
+  }[] = [
+    { id: 'home', label: 'Home' },
+    { id: 'problem-statement', label: 'About the Platform' },
+    { id: 'core-features', label: 'Features' },
+    { id: 'how-it-works', label: 'How It Works' },
+  ];
+
   return (
     <div className="min-h-screen neu-shell transition-colors duration-200">
-      {/* Sticky Public Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-[var(--bg-app)]/90 backdrop-blur-md border-b border-theme">
+      {/* Sticky Public Navigation Bar with Active Section Indicator */}
+      <header className="sticky top-0 z-40 bg-[var(--bg-app)]/95 backdrop-blur-md border-b border-theme">
         <div className="max-w-[1360px] mx-auto px-4 sm:px-8 h-16 flex items-center justify-between gap-4">
           {/* Logo */}
           <button
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            onClick={() => scrollToSection('home')}
             className="flex items-center gap-2.5 text-base sm:text-lg font-bold tracking-tight text-theme-primary whitespace-nowrap shrink-0 cursor-pointer"
           >
             <span className="w-8 h-8 rounded-[10px] neu-btn-primary flex items-center justify-center text-white">
@@ -52,32 +100,32 @@ export const LandingPage: React.FC = () => {
             <span>AICTE CaseSync</span>
           </button>
 
-          {/* Public Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-7 text-xs sm:text-sm font-semibold text-theme-secondary">
-            <button
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="hover:text-theme-primary transition-colors cursor-pointer"
-            >
-              Home
-            </button>
-            <button
-              onClick={() => scrollToSection('problem-statement')}
-              className="hover:text-theme-primary transition-colors cursor-pointer"
-            >
-              About the Platform
-            </button>
-            <button
-              onClick={() => scrollToSection('core-features')}
-              className="hover:text-theme-primary transition-colors cursor-pointer"
-            >
-              Features
-            </button>
-            <button
-              onClick={() => scrollToSection('how-it-works')}
-              className="hover:text-theme-primary transition-colors cursor-pointer"
-            >
-              How It Works
-            </button>
+          {/* Public Navigation Links with Active Pill Indicator */}
+          <nav
+            aria-label="Primary Navigation"
+            className="hidden lg:flex items-center gap-1.5 neu-inset p-1.5 rounded-[14px]"
+          >
+            {navLinks.map((item) => {
+              const isActive = activeNav === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => scrollToSection(item.id)}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`px-3.5 py-1.5 rounded-[10px] text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    isActive
+                      ? 'neu-btn-primary text-white shadow-sm'
+                      : 'text-theme-secondary hover:text-theme-primary'
+                  }`}
+                >
+                  {isActive && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                  )}
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
           </nav>
 
           {/* Theme Toggle + Sign In + Access Dashboard */}
@@ -124,6 +172,30 @@ export const LandingPage: React.FC = () => {
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
+        </div>
+
+        {/* Mobile/Tablet Navigation Strip with Active Indicator */}
+        <div className="lg:hidden border-t border-theme px-4 py-2 flex items-center gap-1.5 overflow-x-auto">
+          {navLinks.map((item) => {
+            const isActive = activeNav === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => scrollToSection(item.id)}
+                className={`px-3 py-1 rounded-[10px] text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                  isActive
+                    ? 'neu-btn-primary text-white'
+                    : 'neu-btn-secondary text-theme-secondary'
+                }`}
+              >
+                {isActive && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                )}
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
         </div>
       </header>
 
