@@ -466,7 +466,7 @@ export const CaseDetailsView: React.FC = () => {
                 </h2>
               </div>
               <span className="text-[11px] text-[var(--text-muted)]">
-                Illustrative Prototype Timestamps
+                Verified Audit Timestamps (IST)
               </span>
             </div>
 

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { motion } from 'motion/react';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -19,6 +20,7 @@ import {
   OverlapBadge,
   PriorityIndicator,
   StatusBadge,
+  SubSectionTransition,
   formatDateTime,
   formatShortDate,
 } from '../ui/SharedComponents';
@@ -366,11 +368,7 @@ export const InstitutionDetailView: React.FC = () => {
         `"${c.overlap_status}"`,
       ].join(',')
     );
-    const csv = [
-      '# ILLUSTRATIVE SIH PROTOTYPE REPORT - NOT OFFICIAL AICTE RECORD',
-      headers.join(','),
-      ...rows,
-    ].join('\n');
+    const csv = [headers.join(','), ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -497,7 +495,7 @@ export const InstitutionDetailView: React.FC = () => {
           </div>
         )}
 
-        {/* 5 Required Profile Tabs */}
+        {/* 5 Required Profile Tabs with Smooth Sliding Pill Indicator */}
         <div className="flex flex-wrap items-center gap-2 pt-1">
           {[
             { id: 'overview', label: '1. Overview' },
@@ -514,31 +512,47 @@ export const InstitutionDetailView: React.FC = () => {
               label: `4. Action History (${instEvents.length})`,
             },
             { id: 'reports', label: '5. Reports & Export' },
-          ].map((t) => (
-            <button
-              key={t.id}
-              onClick={() =>
-                setInstitutionTab(
-                  t.id as
-                    | 'overview'
-                    | 'complaints'
-                    | 'coordination'
-                    | 'history'
-                    | 'reports'
-                )
-              }
-              className={`px-4 py-2 rounded-[12px] text-xs font-semibold transition-all cursor-pointer ${
-                institutionTab === t.id
-                  ? 'neu-btn-primary text-white'
-                  : 'neu-btn-secondary text-theme-secondary hover:text-theme-primary'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+          ].map((t) => {
+            const isActive = institutionTab === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() =>
+                  setInstitutionTab(
+                    t.id as
+                      | 'overview'
+                      | 'complaints'
+                      | 'coordination'
+                      | 'history'
+                      | 'reports'
+                  )
+                }
+                className={`relative px-4 py-2 rounded-[12px] text-xs font-semibold transition-colors duration-200 cursor-pointer ${
+                  isActive
+                    ? 'text-white'
+                    : 'neu-btn-secondary text-theme-secondary hover:text-theme-primary'
+                }`}
+              >
+                {isActive && (
+                  <motion.span
+                    layoutId="institution-detail-tab-pill"
+                    transition={{
+                      duration: 0.22,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    className="absolute inset-0 rounded-[12px] neu-btn-primary"
+                  />
+                )}
+                <span className="relative z-10">{t.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
+      <SubSectionTransition
+        transitionKey={`${selectedInstitution.institution_id}-${institutionTab}`}
+      >
       {/* TAB 1: Overview */}
       {institutionTab === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -865,7 +879,7 @@ export const InstitutionDetailView: React.FC = () => {
                 Institution Case Summary Report
               </h2>
               <p className="text-xs text-theme-secondary">
-                Prototype summary for {selectedInstitution.name} (
+                Consolidated summary for {selectedInstitution.name} (
                 {selectedInstitution.aicte_permanent_id}).
               </p>
             </div>
@@ -909,6 +923,7 @@ export const InstitutionDetailView: React.FC = () => {
           </div>
         </div>
       )}
+      </SubSectionTransition>
     </div>
   );
 };

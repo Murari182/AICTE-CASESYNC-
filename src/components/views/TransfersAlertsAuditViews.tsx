@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { motion } from 'motion/react';
 import {
   AlertTriangle,
   ArrowRightLeft,
@@ -12,6 +13,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useCaseSync } from '../../context/CaseSyncContext';
+import { SubSectionTransition } from '../ui/SharedComponents';
 
 export const TransfersAndEscalationsView: React.FC = () => {
   const {
@@ -758,7 +760,7 @@ export const AlertsAndNotificationsView: React.FC = () => {
         </button>
       </div>
 
-      {/* Category Filter Tabs */}
+      {/* Category Filter Tabs with Smooth Sliding Pill Indicator */}
       <div className="neu-card rounded-2xl p-2 flex items-center gap-1.5 overflow-x-auto">
         {categoryTabs.map((tab) => {
           const isActive = categoryTab === tab.id;
@@ -766,21 +768,33 @@ export const AlertsAndNotificationsView: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setCategoryTab(tab.id)}
-              className={`px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
+              className={`relative px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1.5 transition-colors duration-200 cursor-pointer ${
                 isActive
-                  ? 'neu-btn-primary shadow-xs'
+                  ? 'text-white'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
               }`}
             >
-              <span>{tab.label}</span>
-              <span
-                className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono-tabular font-bold ${
-                  isActive
-                    ? 'bg-white/20 text-white'
-                    : 'bg-[var(--bg-inset)] text-[var(--text-primary)]'
-                }`}
-              >
-                {tab.count}
+              {isActive && (
+                <motion.span
+                  layoutId="alerts-category-tab-pill"
+                  transition={{
+                    duration: 0.22,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="absolute inset-0 rounded-xl neu-btn-primary shadow-xs"
+                />
+              )}
+              <span className="relative z-10 inline-flex items-center gap-1.5">
+                <span>{tab.label}</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono-tabular font-bold ${
+                    isActive
+                      ? 'bg-white/20 text-white'
+                      : 'bg-[var(--bg-inset)] text-[var(--text-primary)]'
+                  }`}
+                >
+                  {tab.count}
+                </span>
               </span>
             </button>
           );
@@ -942,7 +956,8 @@ export const AlertsAndNotificationsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Alert Cards */}
+      {/* Alert Cards with Sub-Category Sliding Transition */}
+      <SubSectionTransition transitionKey={categoryTab}>
       <div className="space-y-3">
         {filteredAlerts.length === 0 ? (
           <div className="neu-card rounded-2xl p-8 text-center space-y-2">
@@ -1349,6 +1364,7 @@ export const AlertsAndNotificationsView: React.FC = () => {
           })
         )}
       </div>
+      </SubSectionTransition>
     </div>
   );
 };
@@ -1434,7 +1450,7 @@ export const AuditTrailView: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-[var(--border-subtle)] text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] bg-[var(--bg-elevated)]">
-                <th className="py-3.5 px-4">Timestamp (Illustrative)</th>
+                <th className="py-3.5 px-4">Timestamp</th>
                 <th className="py-3.5 px-4">Action Type</th>
                 <th className="py-3.5 px-4">Case & Institution</th>
                 <th className="py-3.5 px-4">Actor & Bureau</th>

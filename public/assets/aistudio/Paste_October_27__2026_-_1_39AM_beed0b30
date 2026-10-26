@@ -1,0 +1,792 @@
+# AICTE CaseSync — Full Application Upgrade and Backend Implementation Prompt
+
+## 1. Main objective
+
+Upgrade the existing AICTE CaseSync project into a fully functional, production-oriented web application for integrated institution complaint monitoring and cross-Bureau coordination.
+
+Modify the existing codebase rather than creating an unrelated project. Inspect the current frontend, `WorkspaceApp.tsx`, routing, components, styles, state management, and available backend integrations before making changes.
+
+Implement the following requirements:
+
+1. Smooth sliding transitions whenever users click and switch between main navigation sections.
+2. Apply the same transitions to nested pages, sub-items, tabs, detail views, and other navigable sections.
+3. Remove the demo-mode experience, including demo-role labels, demo login selectors, and demo-specific navigation.
+4. Implement real authentication and backend-enforced role-based access control.
+5. Hide the top navigation bar when the user scrolls down and reveal it when scrolling up.
+6. Create a dedicated `backend/` directory containing the server, APIs, database integration, authentication, business logic, and configuration.
+7. Connect the existing frontend to the backend through actual API requests.
+8. Preserve the current light theme as the default, dark theme support, neumorphic styling, and existing CaseSync visual identity.
+9. Implement institution management, complaint tracking, cross-Bureau overlap detection, transfers, coordination, deadline alerts, reports, and audit history.
+10. Test the entire application instead of stopping at visual implementation.
+
+**Important:** Do not simply rename “Demo Mode” to “Live Mode.” Remove simulated authentication and frontend-only authorization, and implement genuine server-side authentication and permissions.
+
+If external AICTE systems, official datasets, or production credentials are unavailable, build a functioning standalone application with persistent data and clearly documented integration requirements. Do not claim it is connected to real AICTE systems unless that integration exists.
+
+---
+
+## 2. Smooth sliding transitions across the entire application
+
+### A. Main navigation transitions
+
+Update `WorkspaceApp.tsx` and the existing routing/layout components.
+
+Whenever a user clicks a sidebar item, transition smoothly into the selected section.
+
+Apply consistent behavior to:
+
+- Overview.
+- Institution Registry.
+- Complaint Cases.
+- Overlap Detection.
+- Bureau/Cell Coordination.
+- Transfers & Escalations.
+- Alerts & Notifications.
+- Reports & Analytics.
+- Audit Trail.
+- Settings.
+
+The sidebar and persistent application shell must remain stationary. Only the main content region should animate.
+
+Use a subtle horizontal slide combined with a fade.
+
+Recommended values:
+
+- Duration: 180–240ms.
+- Horizontal offset: 10–14px.
+- Initial opacity: 0.
+- Final opacity: 1.
+- Easing: `cubic-bezier(0.22, 1, 0.36, 1)`.
+
+The outgoing content should fade away with minimal movement. The incoming content should slide into its final position.
+
+Do not use large left-to-right page sweeps, bouncing, zooming, or elastic movement.
+
+### B. Apply the same animation to sub-items
+
+Do not implement animations only for the primary sidebar.
+
+Apply the same transition system to:
+
+- Institution detail pages.
+- Complaint detail pages.
+- Related-case detail pages.
+- Nested navigation routes.
+- Dashboard drill-down views.
+- Institution profile tabs.
+- Case history tabs.
+- Coordination detail views.
+- Transfer detail views.
+- Report categories.
+- Settings subsections.
+- Alert detail panels, when they replace the main content.
+- Breadcrumb navigation between parent and child pages.
+
+For example:
+
+Complaint Cases → Select Case → Case Details → Transfer History.
+
+Each navigation step should feel consistent and intentional.
+
+When switching between sibling tabs, use a short fade or subtle slide. When navigating to a detail page, use the same small offset and easing as the other pages.
+
+Avoid animating simple dropdown changes, checkbox toggles, filter updates, or unrelated state changes as though they were page navigation.
+
+### C. One shared transition system
+
+Implement a reusable page-transition component or integrate with the router's existing transition mechanism.
+
+Use the project's current animation library if one already exists. Do not introduce another animation library unnecessarily.
+
+Requirements:
+
+- One consistent duration and easing system.
+- Stable React keys based on the current route.
+- No duplicate entrance animations.
+- No competing CSS transitions on parent and child containers.
+- No horizontal page overflow.
+- No flashing or layout jumping.
+- No re-animation of every chart and card on each render.
+- No accidental animation when notification counts or other unrelated state changes.
+- Preserve the correct active sidebar item during detail navigation.
+
+If the project uses React Router, coordinate the transitions with the actual route changes instead of maintaining a second unrelated navigation state.
+
+If the existing application uses conditional page rendering, refactor it into a stable route-aware system without breaking current features.
+
+### D. Scroll restoration
+
+Define predictable scroll behavior:
+
+- Main navigation changes should start the new page at its expected scroll position.
+- Returning to a previous detail page should restore its scroll position where appropriate.
+- Switching tabs within the same detail page should not unexpectedly jump the user to the top.
+- Opening a modal or notification popover should not reset page scroll.
+- Animated content must not create horizontal scrolling.
+
+Respect `prefers-reduced-motion`. When enabled, reduce the slide distance or replace the animation with a short fade.
+
+---
+
+## 3. Hide the top navigation when scrolling down
+
+Implement an intelligent, hide-on-scroll top navigation bar.
+
+The top bar contains the breadcrumb, global search, notification bell, theme toggle, and authenticated user menu.
+
+### Required behavior
+
+**When scrolling down:**
+
+- Hide the top navigation bar smoothly.
+- Move it upward using a short vertical transform.
+- Keep the sidebar behavior unchanged unless the mobile layout requires a different treatment.
+- Allow the main content to use the additional vertical space appropriately.
+
+**When scrolling up:**
+
+- Reveal the top navigation bar.
+- Restore its original position.
+- Ensure its contents remain clickable and keyboard accessible.
+
+**At the top of the page:**
+
+- Keep the navigation visible.
+- Do not hide it immediately after page load.
+
+### Technical requirements
+
+Use a shared scroll-direction handler attached to the appropriate scrolling container.
+
+Do not add independent scroll listeners to every page.
+
+Use a small scroll threshold, such as 8–16px, to avoid jitter caused by tiny movements. Ignore insignificant scroll changes and avoid repeatedly toggling the bar during small scroll fluctuations.
+
+For example:
+
+- Scrolling down past the threshold hides the bar.
+- Scrolling up past the threshold reveals it.
+- Returning near the top reveals it and resets the scroll state.
+
+Use a transform and opacity transition of approximately 180–220ms.
+
+Do not animate height repeatedly if that causes content jumping. Prefer translating the top bar and managing its occupied space consistently.
+
+Ensure that:
+
+- The notification popover remains usable.
+- Focused controls are not hidden unexpectedly.
+- Keyboard navigation can reveal the navigation.
+- The mobile layout does not place the navigation permanently off-screen.
+- Nested scrolling panels do not accidentally control the global top bar.
+
+If the application uses a dedicated scrollable main-content container rather than the document, attach the handler to that container.
+
+---
+
+## 4. Remove demo mode and implement real authentication
+
+Remove demo-specific elements throughout the project:
+
+- “DEMO MODE” badges.
+- “SIMULATED DEMO ROLE” panels.
+- Demo-role selectors used as authentication.
+- Fake user identities.
+- Fake sign-in success messages.
+- Demo-specific user switching controls.
+- Sample-data labels presented as live institutional data.
+- Demo-only navigation and permission bypasses.
+
+Do not remove useful seeded development data from the development environment. Separate it from the production data flow.
+
+### Login and session management
+
+Implement a genuine authentication flow with:
+
+- Login page.
+- Server-side credential verification.
+- Secure session management.
+- Logout.
+- Session expiry.
+- Protected routes.
+- Unauthorized and forbidden responses.
+- Appropriate error messages.
+
+Use secure, HTTP-only, appropriately configured session cookies or another secure authentication mechanism supported by the existing stack.
+
+Do not store passwords or authentication secrets in browser local storage.
+
+Hash passwords with an established password-hashing algorithm such as Argon2id or bcrypt.
+
+Use environment variables for secrets and provide a `.env.example` file containing placeholders only.
+
+Never hardcode credentials, JWT secrets, database passwords, or API keys.
+
+If public complaint submission is supported, separate it from the authenticated administrative workspace and apply appropriate submission controls.
+
+### Role-based access control
+
+Support these application roles:
+
+1. Administrator.
+2. Regulation Bureau Officer (RB).
+3. Public Grievance Redressal Cell Officer (PGRC).
+4. Regional Officer.
+5. Senior Management / Competent Authority.
+6. Submitter, if public submission is implemented.
+
+Permissions must be determined from the authenticated server-side user record.
+
+Do not allow a user to change their role by modifying a frontend dropdown, local storage, route parameter, or request body.
+
+Implement server-side permission checks for every protected API operation.
+
+Examples:
+
+- An RB officer can access authorized RB records and permitted cross-Bureau coordination tasks.
+- A PGRC officer can access authorized PGRC records and coordination tasks.
+- A regional officer can access records within their authorized regional scope.
+- Senior management can access approved consolidated reports and escalations.
+- An administrator can manage permitted system configurations and users.
+- A submitter can access only the information allowed for their own submissions.
+
+Apply data-level authorization, not just page-level authorization.
+
+Return appropriate `401 Unauthorized` or `403 Forbidden` responses when access is denied.
+
+---
+
+## 5. Create a dedicated backend folder
+
+Create a real `backend/` directory in the existing repository.
+
+Inspect the current technology stack before choosing the implementation. Preserve an existing backend if one is already present, and place the required modules under `backend/` where practical.
+
+If the project has only a frontend, use the following suggested architecture:
+
+- Frontend: React + TypeScript, using the existing stack.
+- Backend: Node.js + Express + TypeScript.
+- Database: PostgreSQL.
+- ORM: Prisma.
+- API style: REST.
+- Validation: Zod or an equivalent schema validation library.
+- Authentication: secure server-managed sessions or an appropriately implemented token/session system.
+- Testing: the existing test framework, or a suitable backend testing framework if none exists.
+
+Do not introduce this stack blindly if the existing repository already uses a functioning alternative. Adapt the architecture while preserving the required separation between frontend, backend, and persistence.
+
+### Suggested repository structure
+
+```text
+AICTE-CaseSync/
+├── frontend/
+│   └── existing frontend application
+├── backend/
+│   ├── src/
+│   │   ├── app.ts
+│   │   ├── server.ts
+│   │   ├── config/
+│   │   ├── middleware/
+│   │   │   ├── authentication.ts
+│   │   │   ├── authorization.ts
+│   │   │   ├── error-handler.ts
+│   │   │   └── validation.ts
+│   │   ├── modules/
+│   │   │   ├── auth/
+│   │   │   ├── users/
+│   │   │   ├── institutions/
+│   │   │   ├── complaints/
+│   │   │   ├── relationships/
+│   │   │   ├── coordination/
+│   │   │   ├── transfers/
+│   │   │   ├── alerts/
+│   │   │   ├── reports/
+│   │   │   └── audit/
+│   │   ├── services/
+│   │   │   ├── institution-matching.ts
+│   │   │   ├── overlap-detection.ts
+│   │   │   ├── deadline-monitor.ts
+│   │   │   ├── notification-service.ts
+│   │   │   └── audit-service.ts
+│   │   ├── database/
+│   │   └── utils/
+│   ├── prisma/
+│   │   ├── schema.prisma
+│   │   ├── migrations/
+│   │   └── seed.ts
+│   ├── tests/
+│   ├── .env.example
+│   ├── package.json
+│   └── README.md
+├── README.md
+└── existing project configuration
+```
+
+Adapt the directory structure to the actual project. Do not move or duplicate existing files unnecessarily.
+
+The backend must contain actual implementation files, not empty placeholder modules.
+
+---
+
+## 6. Database design
+
+Create persistent relational storage for the institution monitoring workflow.
+
+Implement suitable database entities for:
+
+### Users
+
+- User ID.
+- Display name.
+- Email or username.
+- Password hash or external identity reference.
+- Role.
+- Bureau/Cell scope.
+- Regional scope, where applicable.
+- Active status.
+- Created and updated timestamps.
+
+### Institutions
+
+- Institution ID.
+- AICTE Permanent ID.
+- Institution name.
+- Normalized institution name.
+- Address.
+- State.
+- Region.
+- Additional verified metadata.
+- Verification status.
+- Created and updated timestamps.
+
+### Complaints
+
+- Complaint/Case ID.
+- Institution ID.
+- Receipt date.
+- Subject.
+- Description.
+- Category.
+- Priority.
+- Current status.
+- Current Bureau/Cell.
+- Assigned officer.
+- Last action.
+- Next action.
+- Expected disposal date.
+- Created and updated timestamps.
+
+### Case relationships
+
+- Relationship ID.
+- Related Case IDs.
+- Relationship type.
+- Matching method.
+- Match score, where available.
+- Review status.
+- Reviewed by.
+- Review timestamp.
+- Review remarks.
+
+### Coordination records
+
+- Coordination ID.
+- Institution ID.
+- Related case IDs.
+- Involved Bureaus/Cells.
+- Coordination owner.
+- Agreed next action.
+- Deadline.
+- Status.
+- Activity history.
+
+### Transfer records
+
+- Transfer ID.
+- Case ID.
+- Originating Bureau.
+- Receiving Bureau.
+- Reason.
+- Requested by.
+- Requested timestamp.
+- Acceptance status.
+- Accepted by.
+- Accepted timestamp.
+- Remarks.
+
+### Alerts
+
+- Alert ID.
+- Alert type.
+- Severity.
+- Institution ID.
+- Related Case IDs.
+- Description.
+- Assigned officer.
+- Created timestamp.
+- Due timestamp, if applicable.
+- Read status.
+- Acknowledgement status.
+- Resolution status.
+- Resolution reason.
+- Resolved by and timestamp.
+- Deduplication key.
+
+### Audit events
+
+- Event ID.
+- Actor ID.
+- Actor role.
+- Action type.
+- Entity type.
+- Entity ID.
+- Previous value, where relevant.
+- New value, where relevant.
+- Remarks.
+- Timestamp.
+
+Add appropriate foreign keys, indexes, unique constraints, and database transactions.
+
+Use the AICTE Permanent ID as the preferred institution identity key when available. Enforce unique identifiers according to the actual data requirements.
+
+Preserve separate complaint records when they are related. A relationship between cases must not automatically merge their IDs or histories.
+
+---
+
+## 7. Implement real API endpoints
+
+Create versioned REST endpoints under `/api/v1`.
+
+Suggested endpoints:
+
+### Authentication
+
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/logout`
+- `GET /api/v1/auth/me`
+- `POST /api/v1/auth/refresh` if needed by the chosen authentication design.
+
+### Dashboard
+
+- `GET /api/v1/dashboard/summary`
+- `GET /api/v1/dashboard/workload`
+- `GET /api/v1/dashboard/recent-activity`
+
+### Institutions
+
+- `GET /api/v1/institutions`
+- `POST /api/v1/institutions`
+- `GET /api/v1/institutions/:id`
+- `PATCH /api/v1/institutions/:id`
+- `GET /api/v1/institutions/:id/cases`
+- `GET /api/v1/institutions/:id/history`
+
+### Complaints
+
+- `GET /api/v1/complaints`
+- `POST /api/v1/complaints`
+- `GET /api/v1/complaints/:id`
+- `PATCH /api/v1/complaints/:id`
+- `POST /api/v1/complaints/:id/actions`
+- `POST /api/v1/complaints/:id/transfer`
+- `POST /api/v1/complaints/:id/escalate`
+
+### Related cases and overlaps
+
+- `GET /api/v1/overlaps`
+- `GET /api/v1/overlaps/:id`
+- `POST /api/v1/overlaps/:id/review`
+- `POST /api/v1/overlaps/:id/coordinate`
+
+### Coordination
+
+- `GET /api/v1/coordination`
+- `POST /api/v1/coordination`
+- `GET /api/v1/coordination/:id`
+- `PATCH /api/v1/coordination/:id`
+
+### Transfers
+
+- `GET /api/v1/transfers`
+- `GET /api/v1/transfers/:id`
+- `POST /api/v1/transfers/:id/accept`
+- `POST /api/v1/transfers/:id/return`
+
+### Alerts
+
+- `GET /api/v1/alerts`
+- `GET /api/v1/alerts/unread-count`
+- `PATCH /api/v1/alerts/:id/read`
+- `POST /api/v1/alerts/:id/acknowledge`
+- `POST /api/v1/alerts/:id/resolve`
+
+### Reports and audit
+
+- `GET /api/v1/reports/institutions`
+- `GET /api/v1/reports/bureaus`
+- `GET /api/v1/reports/ageing`
+- `GET /api/v1/reports/overlaps`
+- `GET /api/v1/audit`
+
+Adapt the endpoints to the implemented workflows and permissions. Every endpoint must have request validation, appropriate authorization, consistent error handling, and actual database-backed behavior.
+
+Implement pagination, filtering, sorting, and sensible limits for collection endpoints.
+
+Do not return all database records without limits.
+
+---
+
+## 8. Connect the frontend to the backend
+
+Replace frontend-only business data and hardcoded statistics with API-backed data.
+
+Create a shared API client that handles:
+
+- Base URL configuration.
+- Authentication/session behavior.
+- Request and response types.
+- Error handling.
+- Loading states.
+- Request cancellation where appropriate.
+- Consistent API error messages.
+
+Use environment-based configuration for the API URL.
+
+Example frontend environment setting:
+
+`VITE_API_BASE_URL=http://localhost:4000/api/v1`
+
+Adjust the port and configuration to the actual project.
+
+Do not hardcode credentials or secrets in frontend code.
+
+### Required integration behavior
+
+- The dashboard obtains its metrics from the backend.
+- Institution Registry loads persistent institution records.
+- Complaint Cases reads and updates database-backed cases.
+- Case details retrieve the complete permitted case history.
+- Overlap Detection uses the backend matching service.
+- Coordination actions update coordination records.
+- Transfers persist their state and history.
+- Alerts come from the backend alert service.
+- Reports are calculated from stored records.
+- Audit history is retrieved from persisted audit events.
+
+After an action succeeds, refresh or update the relevant application state so all affected screens remain consistent.
+
+Display loading indicators and actionable errors instead of silently falling back to fake data.
+
+If the backend is unavailable, show a clear connection error and a retry option. Do not pretend that a database mutation succeeded.
+
+---
+
+## 9. Implement the core overlap-detection service
+
+Create the backend service in:
+
+`backend/src/services/overlap-detection.ts`
+
+The service should:
+
+1. Retrieve existing cases for the identified institution.
+2. Prefer exact Permanent ID matching.
+3. Use controlled name normalization and fuzzy matching when identity information is incomplete.
+4. Compare relevant descriptions, categories, references, and active actions.
+5. Detect potential cross-Bureau coordination needs.
+6. Generate a meaningful explanation for each alert.
+7. Record a potential relationship without merging case records.
+8. Avoid creating duplicate alerts for the same unresolved relationship.
+9. Support officer confirmation, rejection, and correction.
+10. Record review decisions in the audit trail.
+
+Do not use a raw text similarity threshold as the only decision rule.
+
+Do not fabricate ML accuracy or confidence values. If a trained model is not connected, implement a deterministic, clearly documented matching method and keep the model integration interface separate.
+
+When a case is created or materially updated, trigger the appropriate matching checks.
+
+Use database transactions where a case mutation and related records must succeed together.
+
+---
+
+## 10. Implement backend alert generation
+
+Create:
+
+`backend/src/services/deadline-monitor.ts`
+
+and
+
+`backend/src/services/notification-service.ts`
+
+Generate alerts for:
+
+- Potential cross-Bureau overlaps.
+- Uncertain institution identity.
+- Approaching configured deadlines.
+- Overdue cases.
+- Coordination awaiting action.
+- Transfers awaiting acceptance.
+- Escalations awaiting review.
+
+Use configurable deadline thresholds. Do not assume official statutory deadlines without a verified source or explicit configuration.
+
+Use a scheduled worker or another suitable server-side mechanism to recalculate time-based alerts.
+
+Make alert generation idempotent so repeated runs do not create duplicate alerts.
+
+A case status change, transfer acceptance, relationship review, or coordination resolution should update the appropriate alerts.
+
+Keep read status separate from issue resolution.
+
+Use database-backed notifications. If real-time delivery is implemented, use the project's established WebSocket, Server-Sent Events, or notification mechanism. Otherwise, use reliable API refresh behavior and do not claim instant cross-user updates.
+
+---
+
+## 11. Security and production-readiness requirements
+
+Implement:
+
+- Server-side authentication.
+- Role-based authorization.
+- Data-scope authorization.
+- Request validation.
+- Secure password storage.
+- Secure session handling.
+- Rate limiting on authentication endpoints.
+- CORS restricted to configured frontend origins.
+- Safe error responses.
+- Protection against common injection and authorization flaws.
+- Audit logging for important mutations.
+- Secret management through environment variables.
+- Database migrations.
+- Input size limits.
+- Appropriate file-upload restrictions if document uploads exist.
+
+Do not expose sensitive case descriptions or internal remarks to unauthorized roles.
+
+Do not expose password hashes, authentication tokens, database credentials, or internal server errors.
+
+If production deployment requires HTTPS, configure secure cookie settings for the production environment.
+
+Do not present this prototype as an officially approved AICTE production system or as connected to institutional systems without verified integration.
+
+---
+
+## 12. Backend setup and documentation
+
+Create:
+
+`backend/README.md`
+
+Document:
+
+- Required runtime and dependencies.
+- Environment variables.
+- Database setup.
+- Migration commands.
+- Seed-data commands for development.
+- Backend startup commands.
+- API base URL.
+- Authentication flow.
+- Roles and permissions.
+- Test commands.
+- Common errors and troubleshooting.
+- Deployment configuration.
+
+Create `.env.example` with placeholders for:
+
+- Database connection URL.
+- Authentication/session secret.
+- Frontend origin.
+- Backend port.
+- Optional model-service URL.
+- Optional notification-service configuration.
+
+Do not include real secrets.
+
+Add root-level instructions for running the frontend and backend together.
+
+If Docker Compose is appropriate for the existing project, configure a local PostgreSQL service and a straightforward development workflow.
+
+Keep development seed data separate from production data. Do not automatically create privileged production users with known default passwords.
+
+---
+
+## 13. Required testing
+
+Write and run tests for:
+
+### Navigation
+
+- Main section sliding transitions.
+- Nested detail-page transitions.
+- Correct active sidebar item.
+- Parent section highlighting.
+- Stable layout during navigation.
+- Hide-on-scroll and reveal-on-scroll behavior.
+- Reduced-motion behavior.
+
+### Authentication and permissions
+
+- Valid login.
+- Invalid credentials.
+- Logout.
+- Session expiration.
+- Unauthorized requests.
+- RB and PGRC data-scope restrictions.
+- Regional data-scope restrictions.
+- Permission enforcement for transfers and escalations.
+- Prevention of client-side role escalation.
+
+### Backend and database
+
+- Institution creation and retrieval.
+- Complaint creation and updates.
+- Persistent action history.
+- Transfer request and acceptance.
+- Coordination updates.
+- Alert generation and resolution.
+- Overlap review.
+- Audit history.
+- Database migration and validation.
+
+### Integration
+
+- Dashboard values match the stored records.
+- Frontend mutations persist after refresh.
+- Navigation does not lose relevant case context.
+- Alerts update following case changes.
+- Errors are displayed when the backend is unavailable.
+- Restricted data is not returned to unauthorized users.
+
+Fix issues discovered during testing. Do not claim tests passed unless they have actually been executed.
+
+---
+
+## 14. Definition of completion
+
+The implementation is complete only when:
+
+- The main navigation uses consistent sliding transitions.
+- Nested pages and sub-items use the same transition system.
+- The sidebar and top navigation do not move erratically.
+- The top navigation hides on downward scrolling and returns on upward scrolling.
+- Demo-mode UI and simulated role switching have been removed.
+- Real login and server-enforced permissions work.
+- A dedicated `backend/` folder contains the actual application server and business logic.
+- The backend connects to a persistent database.
+- The frontend uses real API endpoints.
+- Institutions, cases, relationships, transfers, alerts, and audit events persist.
+- Cross-Bureau overlap detection is operational.
+- Deadline and coordination alerts are generated from stored data.
+- The application handles errors and loading states properly.
+- Light and dark themes remain functional.
+- The setup instructions allow another developer to run the project.
+
+### Final instruction
+
+Inspect the existing repository first. Implement the frontend navigation changes and the backend in coordinated stages, keeping the application runnable throughout development.
+
+Do not deliver only a plan, a static dashboard, or a folder containing placeholder backend files. Build the actual functionality, connect the frontend to it, run the available tests, and document any integrations that still require external credentials or services.

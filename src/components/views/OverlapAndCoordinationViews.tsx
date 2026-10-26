@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import {
   AlertTriangle,
   Building2,
@@ -17,6 +18,7 @@ import {
   OverlapBadge,
   PriorityIndicator,
   StatusBadge,
+  SubSectionTransition,
 } from '../ui/SharedComponents';
 
 export const OverlapDetectionView: React.FC = () => {
@@ -146,13 +148,13 @@ export const OverlapDetectionView: React.FC = () => {
         </div>
       </div>
 
-      {/* Filter Pills */}
+      {/* Filter Pills with Smooth Sliding Pill Indicator */}
       <div className="flex flex-wrap items-center gap-2">
         {[
           { id: 'ALL', label: `All Candidate Pairs (${relations.length})` },
           {
             id: 'Potential Overlap — Review Required',
-            label: 'Potential Overlap — Review Required (Scenario A)',
+            label: 'Potential Overlap — Review Required',
           },
           {
             id: 'Confirmed Related Cases',
@@ -160,25 +162,36 @@ export const OverlapDetectionView: React.FC = () => {
           },
           {
             id: 'Institution Identity Uncertain',
-            label: 'Institution Identity Uncertain (Scenario C)',
+            label: 'Institution Identity Uncertain',
           },
           {
             id: 'Not Related — Reviewed',
-            label: 'Same Institution, Distinct Issues (Scenario B)',
+            label: 'Same Institution, Distinct Issues',
           },
-        ].map((pill) => (
-          <button
-            key={pill.id}
-            onClick={() => setStatusFilter(pill.id)}
-            className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
-              statusFilter === pill.id
-                ? 'neu-btn-primary'
-                : 'neu-btn-secondary'
-            }`}
-          >
-            {pill.label}
-          </button>
-        ))}
+        ].map((pill) => {
+          const isActive = statusFilter === pill.id;
+          return (
+            <button
+              key={pill.id}
+              onClick={() => setStatusFilter(pill.id)}
+              className={`relative px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors duration-200 cursor-pointer ${
+                isActive ? 'text-white' : 'neu-btn-secondary'
+              }`}
+            >
+              {isActive && (
+                <motion.span
+                  layoutId="overlap-filter-active-pill"
+                  transition={{
+                    duration: 0.22,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="absolute inset-0 rounded-xl neu-btn-primary"
+                />
+              )}
+              <span className="relative z-10">{pill.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Main Split View: Candidate Pairs Queue + Detailed Comparison & Review */}
@@ -230,9 +243,10 @@ export const OverlapDetectionView: React.FC = () => {
           })}
         </div>
 
-        {/* Right Detail & Side-by-Side Comparison (7 cols) */}
+        {/* Right Detail & Side-by-Side Comparison (7 cols) with SubSectionTransition */}
         {activeRelation && (
           <div className="lg:col-span-7 space-y-5">
+            <SubSectionTransition transitionKey={activeRelation.relation_id}>
             <div className="neu-card rounded-2xl p-6 space-y-5">
               {/* Banner */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--border-subtle)]">
@@ -447,6 +461,7 @@ export const OverlapDetectionView: React.FC = () => {
                 )}
               </div>
             </div>
+            </SubSectionTransition>
           </div>
         )}
       </div>

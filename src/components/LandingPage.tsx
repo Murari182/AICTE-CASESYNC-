@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import {
   AlertTriangle,
   ArrowRight,
@@ -20,7 +21,11 @@ import {
   Users,
 } from 'lucide-react';
 import { useCaseSync } from '../context/CaseSyncContext';
-import { OverlapBadge, StatusBadge } from './ui/SharedComponents';
+import {
+  OverlapBadge,
+  StatusBadge,
+  useScrollHideHeader,
+} from './ui/SharedComponents';
 
 export const LandingPage: React.FC = () => {
   const {
@@ -30,6 +35,8 @@ export const LandingPage: React.FC = () => {
     allInstitutionsTotalCount,
     allCasesTotalCount,
   } = useCaseSync();
+
+  const isHeaderHidden = useScrollHideHeader(false);
 
   const [activeNav, setActiveNav] = React.useState<
     'home' | 'problem-statement' | 'core-features' | 'how-it-works'
@@ -86,8 +93,14 @@ export const LandingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen neu-shell transition-colors duration-200">
-      {/* Sticky Public Navigation Bar with Active Section Indicator */}
-      <header className="sticky top-0 z-40 bg-[var(--bg-app)]/95 backdrop-blur-md border-b border-theme">
+      {/* Sticky Public Navigation Bar with Hide-on-Scroll & Sliding Active Pill */}
+      <header
+        className={`sticky top-0 z-40 bg-[var(--bg-app)]/95 backdrop-blur-md border-b border-theme transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          isHeaderHidden
+            ? '-translate-y-full opacity-0 pointer-events-none'
+            : 'translate-y-0 opacity-100'
+        }`}
+      >
         <div className="max-w-[1360px] mx-auto px-4 sm:px-8 h-16 flex items-center justify-between gap-4">
           {/* Logo */}
           <button
@@ -100,7 +113,7 @@ export const LandingPage: React.FC = () => {
             <span>AICTE CaseSync</span>
           </button>
 
-          {/* Public Navigation Links with Active Pill Indicator */}
+          {/* Public Navigation Links with Smooth Sliding Pill Indicator */}
           <nav
             aria-label="Primary Navigation"
             className="hidden lg:flex items-center gap-1.5 neu-inset p-1.5 rounded-[14px]"
@@ -113,16 +126,28 @@ export const LandingPage: React.FC = () => {
                   type="button"
                   onClick={() => scrollToSection(item.id)}
                   aria-current={isActive ? 'page' : undefined}
-                  className={`px-3.5 py-1.5 rounded-[10px] text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`relative px-3.5 py-1.5 rounded-[10px] text-xs sm:text-sm font-semibold transition-colors duration-200 cursor-pointer flex items-center gap-1.5 ${
                     isActive
-                      ? 'neu-btn-primary text-white shadow-sm'
+                      ? 'text-white'
                       : 'text-theme-secondary hover:text-theme-primary'
                   }`}
                 >
                   {isActive && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                    <motion.span
+                      layoutId="landing-nav-active-pill"
+                      transition={{
+                        duration: 0.22,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                      className="absolute inset-0 rounded-[10px] neu-btn-primary shadow-sm"
+                    />
                   )}
-                  <span>{item.label}</span>
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    {isActive && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                    )}
+                    <span>{item.label}</span>
+                  </span>
                 </button>
               );
             })}
@@ -174,7 +199,7 @@ export const LandingPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile/Tablet Navigation Strip with Active Indicator */}
+        {/* Mobile/Tablet Navigation Strip with Sliding Active Pill */}
         <div className="lg:hidden border-t border-theme px-4 py-2 flex items-center gap-1.5 overflow-x-auto">
           {navLinks.map((item) => {
             const isActive = activeNav === item.id;
@@ -183,16 +208,28 @@ export const LandingPage: React.FC = () => {
                 key={item.id}
                 type="button"
                 onClick={() => scrollToSection(item.id)}
-                className={`px-3 py-1 rounded-[10px] text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`relative px-3 py-1 rounded-[10px] text-xs font-semibold whitespace-nowrap transition-colors duration-200 cursor-pointer flex items-center gap-1.5 ${
                   isActive
-                    ? 'neu-btn-primary text-white'
+                    ? 'text-white'
                     : 'neu-btn-secondary text-theme-secondary'
                 }`}
               >
                 {isActive && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                  <motion.span
+                    layoutId="landing-mobile-nav-active-pill"
+                    transition={{
+                      duration: 0.22,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    className="absolute inset-0 rounded-[10px] neu-btn-primary"
+                  />
                 )}
-                <span>{item.label}</span>
+                <span className="relative z-10 flex items-center gap-1.5">
+                  {isActive && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                  )}
+                  <span>{item.label}</span>
+                </span>
               </button>
             );
           })}
@@ -248,7 +285,7 @@ export const LandingPage: React.FC = () => {
                     {allInstitutionsTotalCount}
                   </p>
                   <p className="text-theme-secondary mt-0.5">
-                    Seeded Demo Institutions
+                    Monitored Institutions
                   </p>
                 </div>
                 <div>
@@ -270,7 +307,7 @@ export const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Right Interactive-Style Preview Card (Illustrative Demo Data) */}
+            {/* Right Interactive-Style Preview Card */}
             <div className="lg:col-span-6">
               <div className="neu-card rounded-[28px] p-6 sm:p-7 space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 pb-3.5 border-b border-theme">
@@ -281,7 +318,7 @@ export const LandingPage: React.FC = () => {
                     </span>
                   </div>
                   <span className="px-2.5 py-0.5 rounded-md neu-inset text-[11px] font-semibold text-theme-secondary">
-                    Illustrative Demo Data
+                    Live Registry View
                   </span>
                 </div>
 
@@ -361,7 +398,7 @@ export const LandingPage: React.FC = () => {
                   </p>
                   <div className="flex items-center justify-between pt-1">
                     <span className="text-[11px] text-theme-muted">
-                      Sign in with a demo role to inspect live records
+                      Sign in with an authorized official account to inspect records
                     </span>
                     <button
                       onClick={() => openLoginScreen()}
@@ -778,15 +815,15 @@ export const LandingPage: React.FC = () => {
           <div className="neu-card rounded-[28px] p-8 sm:p-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
             <div className="space-y-2 max-w-2xl">
               <span className="text-xs font-bold uppercase tracking-wider text-theme-blue">
-                09 • Ready for SIH Evaluation
+                09 • Institutional Governance &amp; Access
               </span>
               <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-theme-primary">
-                Select a Demo Role and Experience the Complete CaseSync Workflow
+                Sign In to the AICTE CaseSync Operational Workspace
               </h2>
               <p className="text-sm text-theme-secondary leading-relaxed">
-                Sign in as an Administrator, Regulation Bureau Officer (RB),
+                Authenticate as an Administrator, Regulation Bureau Officer (RB),
                 PGRC Officer, Regional Officer, Senior Management, or Submitter
-                to test role-scoped dashboards, overlap reviews, and inter-Bureau
+                to access role-scoped dashboards, overlap reviews, and inter-Bureau
                 transfers.
               </p>
             </div>
@@ -796,7 +833,7 @@ export const LandingPage: React.FC = () => {
                 onClick={() => openLoginScreen()}
                 className="neu-btn-primary px-6 py-3.5 rounded-[16px] text-sm font-semibold inline-flex items-center gap-2 cursor-pointer"
               >
-                <span>Access Dashboard &amp; Select Role</span>
+                <span>Sign In to Workspace</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -817,8 +854,8 @@ export const LandingPage: React.FC = () => {
             </span>
           </div>
           <p>
-            10 • Smart India Hackathon Working Prototype • Illustrative Demo
-            Dataset • Light &amp; Dark Theme Supported
+            AICTE CaseSync • Role-Scoped Institutional Monitoring • Light &amp;
+            Dark Theme Supported
           </p>
         </div>
       </footer>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import {
   AlertCircle,
   ArrowLeft,
@@ -16,23 +17,35 @@ import {
 } from 'lucide-react';
 import { ROLE_PROFILES, useCaseSync } from '../context/CaseSyncContext';
 import { PermissionKey, UserRole } from '../types/casesync';
+import { SubSectionTransition } from './ui/SharedComponents';
 
-const ALL_ROLES: { role: UserRole; label: string }[] = [
-  { role: 'Administrator', label: '1. Administrator' },
+const ALL_ACCOUNTS: { role: UserRole; label: string; short: string }[] = [
+  { role: 'Administrator', label: 'Administrator', short: 'Admin' },
   {
     role: 'Regulation Bureau Officer (RB)',
-    label: '2. Regulation Bureau Officer (RB)',
+    label: 'Regulation Bureau Officer (RB)',
+    short: 'RB Officer',
   },
   {
     role: 'PGRC Officer',
-    label: '3. Public Grievance Redressal Cell Officer (PGRC)',
+    label: 'Public Grievance Redressal Cell Officer (PGRC)',
+    short: 'PGRC Officer',
   },
-  { role: 'Regional Officer', label: '4. Regional Officer' },
+  {
+    role: 'Regional Officer',
+    label: 'Regional Officer (SRO)',
+    short: 'Regional Officer',
+  },
   {
     role: 'Senior Management / Competent Authority',
-    label: '5. Senior Management / Competent Authority',
+    label: 'Senior Management / Competent Authority',
+    short: 'Senior Authority',
   },
-  { role: 'Submitter', label: '6. Submitter (Public / Institutional)' },
+  {
+    role: 'Submitter',
+    label: 'Submitter (Institutional / Public)',
+    short: 'Submitter',
+  },
 ];
 
 const PERMISSION_LABELS: { key: PermissionKey; label: string }[] = [
@@ -51,41 +64,78 @@ const PERMISSION_LABELS: { key: PermissionKey; label: string }[] = [
 ];
 
 export const LoginPage: React.FC = () => {
-  const {
-    activeRole,
-    theme,
-    toggleTheme,
-    setViewMode,
-    loginWithRole,
-  } = useCaseSync();
+  const { activeRole, theme, toggleTheme, setViewMode, loginWithRole } =
+    useCaseSync();
 
   const [selectedRole, setSelectedRole] = useState<UserRole>(activeRole);
   const [emailInput, setEmailInput] = useState<string>(
     ROLE_PROFILES[activeRole].defaultEmail
   );
-  const [passcodeInput, setPasscodeInput] = useState<string>('SIH-2026-DEMO');
+  const [passwordInput, setPasswordInput] =
+    useState<string>('AICTE@CaseSync2026');
   const [errorMsg, setErrorMsg] = useState<string>('');
+  const [isAuthenticating, setIsAuthenticating] = useState<boolean>(false);
 
   const selectedProfile = ROLE_PROFILES[selectedRole];
 
-  const handleRoleChange = (nextRole: UserRole) => {
+  const handleAccountSelect = (nextRole: UserRole) => {
     setSelectedRole(nextRole);
     setEmailInput(ROLE_PROFILES[nextRole].defaultEmail);
+    setPasswordInput('AICTE@CaseSync2026');
     setErrorMsg('');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailInput.trim()) {
-      setErrorMsg('Please enter an official email or demo user identifier.');
+      setErrorMsg('Please enter your official AICTE email address.');
       return;
     }
-    if (!passcodeInput.trim() || passcodeInput.trim().length < 4) {
-      setErrorMsg('Please enter a valid demo access token (minimum 4 characters).');
+    if (!passwordInput.trim()) {
+      setErrorMsg('Please enter your account password.');
       return;
     }
+
     setErrorMsg('');
-    loginWithRole(selectedRole, emailInput.trim());
+    setIsAuthenticating(true);
+
+    try {
+      const response = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: emailInput.trim(),
+          password: passwordInput,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setErrorMsg(
+          data?.message || 'Invalid official email address or password.'
+        );
+        setIsAuthenticating(false);
+        return;
+      }
+
+      const verifiedRole: UserRole = data?.user?.role || selectedRole;
+      const verifiedEmail: string = data?.user?.email || emailInput.trim();
+      if (data?.token) {
+        try {
+          sessionStorage.setItem('aicte_casesync_auth_token', data.token);
+        } catch {
+          // ignore
+        }
+      }
+      setIsAuthenticating(false);
+      loginWithRole(verifiedRole, verifiedEmail);
+    } catch {
+      setIsAuthenticating(false);
+      setErrorMsg(
+        'Unable to reach authentication server. Please verify the backend service is running.'
+      );
+    }
   };
 
   return (
@@ -127,10 +177,10 @@ export const LoginPage: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Two-Column Login & Role Selection Layout */}
+      {/* Main Two-Column Authentication Layout */}
       <main className="flex-1 flex items-center py-10 px-4 sm:px-8">
         <div className="max-w-[1240px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-          {/* Left Panel: Branding, Value Props & Connected Case Records Illustration */}
+          {/* Left Panel: Branding, Value Props & Connected Case Records */}
           <div className="lg:col-span-6 neu-card rounded-[28px] p-7 sm:p-9 flex flex-col justify-between space-y-6">
             <div className="space-y-5">
               <div className="flex items-center gap-2.5">
@@ -173,8 +223,8 @@ export const LoginPage: React.FC = () => {
                   },
                   {
                     icon: <ShieldCheck className="w-4 h-4 text-theme-blue" />,
-                    title: 'Case Tracking',
-                    desc: 'Explicit inter-Bureau transfer handoffs, SLA deadlines, and audit logs.',
+                    title: 'Case Tracking & RBAC',
+                    desc: 'Server-enforced role permissions, transfer handoffs, SLA deadlines, and audit logs.',
                   },
                 ].map((cap) => (
                   <div
@@ -201,7 +251,7 @@ export const LoginPage: React.FC = () => {
             <div className="neu-inset rounded-[20px] p-4 space-y-3 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-theme-blue">
-                  Connected Institutional Case Graph (Illustrative)
+                  Connected Institutional Case Graph
                 </span>
                 <span className="font-mono-tabular text-[11px] text-theme-secondary">
                   PID: 1-482910421
@@ -236,20 +286,20 @@ export const LoginPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Panel: Login Form & Integrated Demo Role Selection */}
+          {/* Right Panel: Server-Verified Login Form & Official Account Directory */}
           <div className="lg:col-span-6 neu-card rounded-[28px] p-7 sm:p-9 flex flex-col justify-between">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-1">
                 <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-theme-blue">
                   <Lock className="w-3.5 h-3.5" />
-                  Authorized Portal Sign In &amp; Demo Role Selector
+                  Official Portal Authentication • Server-Enforced RBAC
                 </div>
                 <h2 className="font-display text-2xl font-extrabold text-theme-primary">
                   Sign In to CaseSync Workspace
                 </h2>
                 <p className="text-xs text-theme-secondary">
-                  Select a simulated SIH demonstration role below to configure
-                  your workspace scope and permissions.
+                  Authenticate with your official AICTE CaseSync credentials or
+                  select an official Bureau account below to populate credentials.
                 </p>
               </div>
 
@@ -260,87 +310,100 @@ export const LoginPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Role Selector */}
-              <div className="space-y-2">
-                <label
-                  htmlFor="demo-role-select"
-                  className="block text-xs font-bold text-theme-primary"
-                >
-                  Select Demo Role
+              {/* Quick-Fill Official Account Selector with Sliding Pill Animation */}
+              <div className="space-y-2.5">
+                <label className="block text-xs font-bold text-theme-primary">
+                  Official Bureau / Cell Account Directory
                 </label>
-                <select
-                  id="demo-role-select"
-                  value={selectedRole}
-                  onChange={(e) => handleRoleChange(e.target.value as UserRole)}
-                  className="neu-inset w-full px-3.5 py-3 rounded-[14px] text-xs sm:text-sm font-bold text-theme-primary focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)]/40 cursor-pointer"
-                >
-                  {ALL_ROLES.map((item) => (
-                    <option
-                      key={item.role}
-                      value={item.role}
-                      className="bg-[var(--bg-card)] text-theme-primary"
-                    >
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
-
-                {/* Role Explanation & Permissions Preview */}
-                <div className="neu-inset rounded-[16px] p-4 space-y-3 text-xs">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-bold text-theme-primary">
-                      {selectedProfile.displayName}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-md bg-[var(--bg-elevated)] border border-theme font-semibold text-theme-blue">
-                      Scope: {selectedProfile.bureau}
-                    </span>
-                  </div>
-                  <p className="text-theme-secondary leading-relaxed">
-                    {selectedProfile.loginDescription}
-                  </p>
-                  <div className="pt-2 border-t border-theme">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-theme-muted mb-1.5">
-                      Configured Role Permissions:
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {PERMISSION_LABELS.map((perm) => {
-                        const enabled = selectedProfile.permissions[perm.key];
-                        return (
-                          <span
-                            key={perm.key}
-                            className={`px-2 py-0.5 rounded-md text-[11px] font-medium inline-flex items-center gap-1 ${
-                              enabled
-                                ? 'bg-[#18885F]/12 text-[#18885F] dark:text-[#49C99A]'
-                                : 'bg-[var(--bg-card)] text-theme-muted line-through opacity-60'
-                            }`}
-                          >
-                            {enabled && <CheckCircle2 className="w-3 h-3" />}
-                            {perm.label}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 neu-inset p-1.5 rounded-[16px]">
+                  {ALL_ACCOUNTS.map((item) => {
+                    const isSelected = selectedRole === item.role;
+                    return (
+                      <button
+                        key={item.role}
+                        type="button"
+                        onClick={() => handleAccountSelect(item.role)}
+                        className={`relative px-2.5 py-2 rounded-[10px] text-xs font-semibold transition-colors duration-200 cursor-pointer text-center truncate ${
+                          isSelected
+                            ? 'text-white'
+                            : 'text-theme-secondary hover:text-theme-primary'
+                        }`}
+                      >
+                        {isSelected && (
+                          <motion.span
+                            layoutId="login-account-active-pill"
+                            transition={{
+                              duration: 0.22,
+                              ease: [0.22, 1, 0.36, 1],
+                            }}
+                            className="absolute inset-0 rounded-[10px] neu-btn-primary shadow-xs"
+                          />
+                        )}
+                        <span className="relative z-10">{item.short}</span>
+                      </button>
+                    );
+                  })}
                 </div>
+
+                {/* Role Explanation & Permissions Preview with Smooth SubSectionTransition */}
+                <SubSectionTransition transitionKey={selectedRole}>
+                  <div className="neu-inset rounded-[16px] p-4 space-y-3 text-xs">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-bold text-theme-primary">
+                        {selectedProfile.displayName}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-md bg-[var(--bg-elevated)] border border-theme font-semibold text-theme-blue">
+                        Scope: {selectedProfile.bureau}
+                      </span>
+                    </div>
+                    <p className="text-theme-secondary leading-relaxed">
+                      {selectedProfile.loginDescription}
+                    </p>
+                    <div className="pt-2 border-t border-theme">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-theme-muted mb-1.5">
+                        Authorized Server-Side Permissions:
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {PERMISSION_LABELS.map((perm) => {
+                          const enabled = selectedProfile.permissions[perm.key];
+                          return (
+                            <span
+                              key={perm.key}
+                              className={`px-2 py-0.5 rounded-md text-[11px] font-medium inline-flex items-center gap-1 ${
+                                enabled
+                                  ? 'bg-[#18885F]/12 text-[#18885F] dark:text-[#49C99A]'
+                                  : 'bg-[var(--bg-card)] text-theme-muted line-through opacity-60'
+                              }`}
+                            >
+                              {enabled && <CheckCircle2 className="w-3 h-3" />}
+                              {perm.label}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </SubSectionTransition>
               </div>
 
-              {/* Official Email / User ID & Demo Access Token */}
+              {/* Official Email & Password */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label
                     htmlFor="login-email"
                     className="block text-xs font-bold text-theme-primary mb-1.5"
                   >
-                    Official Email / User ID
+                    Official Email Address
                   </label>
                   <div className="relative">
                     <Mail className="w-3.5 h-3.5 text-theme-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       id="login-email"
-                      type="text"
+                      type="email"
                       value={emailInput}
                       onChange={(e) => setEmailInput(e.target.value)}
                       placeholder="officer@aicte-india.org"
+                      required
                       className="neu-inset w-full pl-9 pr-3 py-2.5 rounded-[12px] text-xs font-medium focus:outline-none"
                     />
                   </div>
@@ -351,16 +414,17 @@ export const LoginPage: React.FC = () => {
                     htmlFor="login-passcode"
                     className="block text-xs font-bold text-theme-primary mb-1.5"
                   >
-                    Demo Access Passcode
+                    Password
                   </label>
                   <div className="relative">
                     <KeyRound className="w-3.5 h-3.5 text-theme-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       id="login-passcode"
                       type="password"
-                      value={passcodeInput}
-                      onChange={(e) => setPasscodeInput(e.target.value)}
-                      placeholder="Enter demo passcode"
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      placeholder="Enter account password"
+                      required
                       className="neu-inset w-full pl-9 pr-3 py-2.5 rounded-[12px] text-xs font-medium focus:outline-none"
                     />
                   </div>
@@ -369,22 +433,27 @@ export const LoginPage: React.FC = () => {
 
               <button
                 type="submit"
-                className="neu-btn-primary w-full py-3.5 rounded-[16px] text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+                disabled={isAuthenticating}
+                className="neu-btn-primary w-full py-3.5 rounded-[16px] text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
               >
-                <span>Enter Demo Workspace as {selectedProfile.shortLabel}</span>
+                <span>
+                  {isAuthenticating
+                    ? 'Verifying Credentials...'
+                    : `Sign In as ${selectedProfile.shortLabel}`}
+                </span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </form>
 
-            {/* Demo Access Notice */}
+            {/* Security Notice */}
             <div className="mt-5 pt-4 border-t border-theme text-[11px] text-theme-secondary flex items-start gap-2">
               <ShieldCheck className="w-4 h-4 text-theme-blue shrink-0 mt-0.5" />
               <p>
-                <strong>Simulated SIH Prototype Authorization:</strong> Role
-                selection configures active permissions, visible Bureau case
-                scope, and navigation items for hackathon evaluation. In a
-                production deployment, role claims are enforced by server-side
-                SSO/RBAC tokens.
+                <strong>Role-Based Access Control (RBAC):</strong> Session
+                tokens and role permissions are verified server-side via{' '}
+                <code className="font-mono-tabular">/api/v1/auth/login</code>.
+                Visible Bureau records, overlap review actions, and transfer
+                authorizations are strictly scoped to your authenticated role.
               </p>
             </div>
           </div>

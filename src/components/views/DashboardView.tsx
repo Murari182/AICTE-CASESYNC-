@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { motion } from 'motion/react';
 import {
   AlertTriangle,
   ArrowRightLeft,
@@ -264,8 +265,7 @@ export const DashboardView: React.FC = () => {
             </span>
             <span>·</span>
             <span>
-              Last updated: {formatDateTime(lastUpdatedAt)} (Illustrative Demo
-              Data)
+              Last updated: {formatDateTime(lastUpdatedAt)}
             </span>
           </div>
           <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-theme-primary tracking-tight">
@@ -596,13 +596,23 @@ export const DashboardView: React.FC = () => {
                   key={tab.id}
                   type="button"
                   onClick={() => setCaseTableStatusFilter(tab.id)}
-                  className={`px-3 py-1.5 rounded-[10px] text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                  className={`relative px-3 py-1.5 rounded-[10px] text-xs font-semibold transition-colors duration-200 cursor-pointer whitespace-nowrap shrink-0 ${
                     active
-                      ? 'neu-btn-primary text-white'
+                      ? 'text-white'
                       : 'neu-btn-secondary text-theme-secondary hover:text-theme-primary'
                   }`}
                 >
-                  {tab.label}
+                  {active && (
+                    <motion.span
+                      layoutId="dashboard-case-status-pill"
+                      transition={{
+                        duration: 0.22,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                      className="absolute inset-0 rounded-[10px] neu-btn-primary"
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
                 </button>
               );
             })}

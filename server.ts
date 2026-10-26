@@ -1,128 +1,104 @@
 import express from 'express';
+import { createServer as createViteServer } from 'vite';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
-import { createServer as createViteServer } from 'vite';
 import {
   INITIAL_ALERTS,
   INITIAL_CASES,
   INITIAL_COORDINATION,
   INITIAL_ESCALATIONS,
   INITIAL_INSTITUTIONS,
-  INITIAL_MODEL_EVALUATIONS,
   INITIAL_RELATIONS,
   INITIAL_ROUTING_RULES,
   INITIAL_SLA_CONFIG,
   INITIAL_TRANSFERS,
-  classifyAndMatchComplaint,
 } from './src/data/seedData';
 import {
-  AlertRecord,
-  CaseRecord,
-  CaseRelation,
-  CoordinationRecord,
-  EscalationRecord,
-  InstitutionRecord,
-  RoutingRule,
-  SlaConfig,
-  TransferRecord,
-} from './src/types/casesync';
-
-dotenv.config();
+  createApiV1Router,
+  PersistedDatabaseState,
+} from './backend/src/routes/v1';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const DB_FILE = path.join(__dirname, 'data-store.json');
 
-let institutionsStore: InstitutionRecord[] = structuredClone(INITIAL_INSTITUTIONS);
-let casesStore: CaseRecord[] = structuredClone(INITIAL_CASES);
-let relationsStore: CaseRelation[] = structuredClone(INITIAL_RELATIONS);
-let coordinationStore: CoordinationRecord[] = structuredClone(INITIAL_COORDINATION);
-let transfersStore: TransferRecord[] = structuredClone(INITIAL_TRANSFERS);
-let escalationsStore: EscalationRecord[] = structuredClone(INITIAL_ESCALATIONS);
-let alertsStore: AlertRecord[] = structuredClone(INITIAL_ALERTS);
-let routingRulesStore: RoutingRule[] = structuredClone(INITIAL_ROUTING_RULES);
-let slaConfigStore: SlaConfig = structuredClone(INITIAL_SLA_CONFIG);
+function getInitialStore(): PersistedDatabaseState {
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const raw = fs.readFileSync(DB_FILE, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.cases) && Array.isArray(parsed.institutions)) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.error('Failed to read local store, using initial dataset:', e);
+  }
+  return {
+    institutions: structuredClone(INITIAL_INSTITUTIONS),
+    cases: structuredClone(INITIAL_CASES),
+    relations: structuredClone(INITIAL_RELATIONS),
+    coordination: structuredClone(INITIAL_COORDINATION),
+    transfers: structuredClone(INITIAL_TRANSFERS),
+    escalations: structuredClone(INITIAL_ESCALATIONS),
+    alerts: structuredClone(INITIAL_ALERTS),
+    routingRules: structuredClone(INITIAL_ROUTING_RULES),
+    slaConfig: structuredClone(INITIAL_SLA_CONFIG),
+  };
+}
+
+let memoryStore: PersistedDatabaseState = getInitialStore();
+
+function saveStore(nextStore: PersistedDatabaseState) {
+  memoryStore = nextStore;
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(memoryStore, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('Failed to write store:', e);
+  }
+}
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json({ limit: '4mb' }));
+  app.use(express.json({ limit: '5mb' }));
 
+  // Mount versioned REST API v1 from dedicated /backend module
+  app.use(
+    '/api/v1',
+    createApiV1Router(
+      () => memoryStore,
+      (next) => saveStore(next)
+    )
+  );
+
+  // State synchronization routes
   app.get('/api/state', (_req, res) => {
-    res.json({
-      institutions: institutionsStore,
-      cases: casesStore,
-      relations: relationsStore,
-      coordination: coordinationStore,
-      transfers: transfersStore,
-      escalations: escalationsStore,
-      alerts: alertsStore,
-      routingRules: routingRulesStore,
-      slaConfig: slaConfigStore,
-      modelEvaluations: INITIAL_MODEL_EVALUATIONS,
-      lastUpdatedAt: new Date().toISOString(),
-    });
-  });
-
-  app.post('/api/classify', (req, res) => {
-    const {
-      description = '',
-      title = '',
-      institutionName = '',
-      aictePermanentId = '',
-    } = req.body || {};
-
-    const result = classifyAndMatchComplaint(
-      String(description),
-      String(title),
-      String(institutionName),
-      String(aictePermanentId),
-      casesStore,
-      institutionsStore,
-      routingRulesStore
-    );
-    res.json(result);
+    res.json(memoryStore);
   });
 
   app.post('/api/sync', (req, res) => {
-    const body = req.body || {};
-    if (Array.isArray(body.institutions)) institutionsStore = body.institutions;
-    if (Array.isArray(body.cases)) casesStore = body.cases;
-    if (Array.isArray(body.relations)) relationsStore = body.relations;
-    if (Array.isArray(body.coordination)) coordinationStore = body.coordination;
-    if (Array.isArray(body.transfers)) transfersStore = body.transfers;
-    if (Array.isArray(body.escalations)) escalationsStore = body.escalations;
-    if (Array.isArray(body.alerts)) alertsStore = body.alerts;
-    if (Array.isArray(body.routingRules)) routingRulesStore = body.routingRules;
-    if (body.slaConfig) slaConfigStore = body.slaConfig;
-
+    if (req.body && typeof req.body === 'object') {
+      saveStore({
+        ...memoryStore,
+        ...req.body,
+      });
+    }
     res.json({ ok: true, updatedAt: new Date().toISOString() });
   });
 
   app.post('/api/reset', (_req, res) => {
-    institutionsStore = structuredClone(INITIAL_INSTITUTIONS);
-    casesStore = structuredClone(INITIAL_CASES);
-    relationsStore = structuredClone(INITIAL_RELATIONS);
-    coordinationStore = structuredClone(INITIAL_COORDINATION);
-    transfersStore = structuredClone(INITIAL_TRANSFERS);
-    escalationsStore = structuredClone(INITIAL_ESCALATIONS);
-    alertsStore = structuredClone(INITIAL_ALERTS);
-    routingRulesStore = structuredClone(INITIAL_ROUTING_RULES);
-    slaConfigStore = structuredClone(INITIAL_SLA_CONFIG);
-
-    res.json({
-      institutions: institutionsStore,
-      cases: casesStore,
-      relations: relationsStore,
-      coordination: coordinationStore,
-      transfers: transfersStore,
-      escalations: escalationsStore,
-      alerts: alertsStore,
-      routingRules: routingRulesStore,
-      slaConfig: slaConfigStore,
-      modelEvaluations: INITIAL_MODEL_EVALUATIONS,
-    });
+    try {
+      if (fs.existsSync(DB_FILE)) {
+        fs.unlinkSync(DB_FILE);
+      }
+    } catch {
+      // ignore
+    }
+    memoryStore = getInitialStore();
+    res.json(memoryStore);
   });
 
   if (process.env.NODE_ENV !== 'production') {
@@ -134,13 +110,13 @@ async function startServer() {
   } else {
     const distPath = path.join(__dirname, 'dist');
     app.use(express.static(distPath));
-    app.get('*all', (_req, res) => {
+    app.get('*', (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`AICTE CaseSync Server listening on http://localhost:${PORT}`);
+    console.log(`AICTE CaseSync server running on http://localhost:${PORT}`);
   });
 }
 

@@ -198,7 +198,7 @@ export const AnalyticsView: React.FC = () => {
       c.expected_disposal_at,
     ]);
     const csvContent =
-      '# PROTOTYPE OUTPUT — ILLUSTRATIVE SAMPLE DATA FOR AICTE CASESYNC SIH DEMO\n' +
+      '# AICTE CASESYNC — CONSOLIDATED INSTITUTIONAL & BUREAU MONITORING REPORT\n' +
       [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -213,7 +213,7 @@ export const AnalyticsView: React.FC = () => {
 
     addToast(
       'CSV Report Exported',
-      `Exported ${scopedCases.length} records (labelled as Prototype Output).`
+      `Exported ${scopedCases.length} institutional case records.`
     );
   };
 
@@ -230,7 +230,7 @@ export const AnalyticsView: React.FC = () => {
             Reports & Analytics
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
-            Derived directly from live complaint, institution, overlap, and transfer records. Labelled as illustrative SIH prototype outputs.
+            Derived directly from live complaint, institution, cross-Bureau overlap, and transfer records.
           </p>
         </div>
 

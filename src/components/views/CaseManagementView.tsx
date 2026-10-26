@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { motion } from 'motion/react';
 import {
   ArrowUpDown,
   Building2,
@@ -353,7 +354,7 @@ export const CaseManagementView: React.FC = () => {
           </div>
         </div>
 
-        {/* Status Quick Filter Bar */}
+        {/* Status Quick Filter Bar with Smooth Sliding Pill Indicator */}
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
           {[
             { id: 'ALL', label: 'All Cases' },
@@ -365,13 +366,23 @@ export const CaseManagementView: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setCaseListStatusFilter(tab.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-200 cursor-pointer ${
                   active
-                    ? 'neu-btn-primary shadow-sm'
+                    ? 'text-white'
                     : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] border border-[var(--border-subtle)] hover:text-[var(--text-primary)]'
                 }`}
               >
-                {tab.label}
+                {active && (
+                  <motion.span
+                    layoutId="case-mgmt-status-pill"
+                    transition={{
+                      duration: 0.22,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    className="absolute inset-0 rounded-lg neu-btn-primary shadow-sm"
+                  />
+                )}
+                <span className="relative z-10">{tab.label}</span>
               </button>
             );
           })}
@@ -649,7 +660,7 @@ export const CaseManagementView: React.FC = () => {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-[11px] text-[var(--text-muted)] hidden sm:inline">
-              Illustrative SIH Demonstration Dataset
+              Consolidated Multi-Bureau Case Register
             </span>
             <button
               type="button"

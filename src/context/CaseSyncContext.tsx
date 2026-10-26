@@ -277,7 +277,7 @@ export const ROLE_PROFILES: Record<UserRole, RoleProfileConfig> = {
   },
   Submitter: {
     displayName: 'Authorized Institutional / Student Submitter',
-    defaultEmail: 'submitter.demo@academic.edu.in',
+    defaultEmail: 'submitter@academic.edu.in',
     shortLabel: 'Submitter',
     bureau: 'Public Grievance Redressal Cell (PGRC)',
     scopeSummary: 'Simplified submission and status tracking view (internal Bureau remarks and admin tools restricted).',
@@ -437,7 +437,7 @@ interface CaseSyncContextValue {
   markAllAlertsRead: () => void;
   assignAlertItem: (alertId: string, assignee: string) => boolean;
   saveSystemSettings: (newRules: RoutingRule[], newSla: SlaConfig) => void;
-  resetDemoData: () => Promise<void>;
+  resetSystemState: () => Promise<void>;
 }
 
 const CaseSyncContext = createContext<CaseSyncContextValue | undefined>(
@@ -557,6 +557,70 @@ export const CaseSyncProvider: React.FC<{ children: React.ReactNode }> = ({
   const [caseListStatusFilter, setCaseListStatusFilter] =
     useState<string>('ALL');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [serverHydrated, setServerHydrated] = useState<boolean>(false);
+
+  // Hydrate persistent state and active server session on mount
+  useEffect(() => {
+    let active = true;
+    fetch('/api/state')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data) return;
+        if (Array.isArray(data.institutions) && data.institutions.length > 0) {
+          setInstitutions(data.institutions);
+        }
+        if (Array.isArray(data.cases) && data.cases.length > 0) {
+          setCases(data.cases);
+        }
+        if (Array.isArray(data.relations)) {
+          setRelations(data.relations);
+        }
+        if (Array.isArray(data.coordination)) {
+          setCoordination(data.coordination);
+        }
+        if (Array.isArray(data.transfers)) {
+          setTransfers(data.transfers);
+        }
+        if (Array.isArray(data.escalations)) {
+          setEscalations(data.escalations);
+        }
+        if (Array.isArray(data.alerts)) {
+          setAlerts(data.alerts);
+        }
+        if (Array.isArray(data.routingRules) && data.routingRules.length > 0) {
+          setRoutingRules(data.routingRules);
+        }
+        if (data.slaConfig) {
+          setSlaConfig(data.slaConfig);
+        }
+      })
+      .catch(() => {
+        // Fallback to localStorage state if offline
+      })
+      .finally(() => {
+        if (active) setServerHydrated(true);
+      });
+
+    fetch('/api/v1/auth/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((sessionData) => {
+        if (!active || !sessionData?.user) return;
+        const serverRole = sessionData.user.role as UserRole;
+        if (serverRole in ROLE_PROFILES) {
+          setActiveRoleState(serverRole);
+          setActiveUserEmail(
+            sessionData.user.email || ROLE_PROFILES[serverRole].defaultEmail
+          );
+        }
+      })
+      .catch(() => {
+        // Not logged in yet
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const addToast = (
     title: string,
@@ -790,11 +854,19 @@ export const CaseSyncProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const signOutToHome = () => {
+    fetch('/api/v1/auth/logout', { method: 'POST' }).catch(() => {
+      // ignore
+    });
+    try {
+      sessionStorage.removeItem('aicte_casesync_auth_token');
+    } catch {
+      // ignore
+    }
     setViewMode('landing');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     addToast(
-      'Exited Demo Workspace',
-      'Returned to the public AICTE CaseSync home page.',
+      'Signed Out',
+      'Your session has been terminated and returned to the home page.',
       'info'
     );
   };
@@ -1087,6 +1159,7 @@ export const CaseSyncProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch {
       // ignore
     }
+    if (!serverHydrated) return;
     fetch('/api/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1095,6 +1168,7 @@ export const CaseSyncProvider: React.FC<{ children: React.ReactNode }> = ({
       // ignore offline
     });
   }, [
+    serverHydrated,
     allInstitutions,
     allCases,
     allRelations,
@@ -1115,6 +1189,22 @@ export const CaseSyncProvider: React.FC<{ children: React.ReactNode }> = ({
     cases.find((c) => c.id === selectedCaseId) || cases[0] || allCases[0];
 
   const refreshDataset = () => {
+    fetch('/api/state')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          if (Array.isArray(data.institutions)) setInstitutions(data.institutions);
+          if (Array.isArray(data.cases)) setCases(data.cases);
+          if (Array.isArray(data.relations)) setRelations(data.relations);
+          if (Array.isArray(data.coordination)) setCoordination(data.coordination);
+          if (Array.isArray(data.transfers)) setTransfers(data.transfers);
+          if (Array.isArray(data.escalations)) setEscalations(data.escalations);
+          if (Array.isArray(data.alerts)) setAlerts(data.alerts);
+        }
+      })
+      .catch(() => {
+        // ignore
+      });
     setLastUpdatedAt(new Date().toISOString());
     addToast(
       'Monitoring Dataset Refreshed',
@@ -2247,7 +2337,7 @@ export const CaseSyncProvider: React.FC<{ children: React.ReactNode }> = ({
     );
   };
 
-  const resetDemoData = async () => {
+  const resetSystemState = async () => {
     try {
       await fetch('/api/reset', { method: 'POST' });
     } catch {
@@ -2268,8 +2358,8 @@ export const CaseSyncProvider: React.FC<{ children: React.ReactNode }> = ({
     setCaseListStatusFilter('ALL');
     setLastUpdatedAt(new Date().toISOString());
     addToast(
-      'Demo Dataset Reset',
-      'Restored all 12 illustrative institutions, 12 multi-Bureau complaints, and Scenarios A, B, and C.',
+      'System Dataset Reset',
+      'Restored all 12 monitored institutions, 12 multi-Bureau complaints, and baseline overlap records.',
       'info'
     );
   };
@@ -2336,7 +2426,7 @@ export const CaseSyncProvider: React.FC<{ children: React.ReactNode }> = ({
         markAllAlertsRead,
         assignAlertItem,
         saveSystemSettings,
-        resetDemoData,
+        resetSystemState,
       }}
     >
       {children}

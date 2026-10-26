@@ -1,6 +1,6 @@
 {
   "name": "AICTE CaseSync — AI Case Classification & Routing",
-  "description": "Smart India Hackathon prototype for AI-powered institutional case classification, priority detection, intelligent department routing, and transparent case tracking.",
+  "description": "Integrated platform for AICTE institutional complaint monitoring, cross-Bureau overlap detection, intelligent department routing, and coordinated case tracking.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   AlertCircle,
   AlertTriangle,
@@ -407,4 +408,91 @@ export function exportCasesToCsv(
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+
+/**
+ * Shared transition wrapper for nested pages, sub-items, tabs, and detail views.
+ * Uses the exact same 200ms cubic-bezier(0.22, 1, 0.36, 1) horizontal slide + fade
+ * as the primary sidebar navigation, while respecting prefers-reduced-motion.
+ */
+export const SubSectionTransition: React.FC<{
+  transitionKey: string;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ transitionKey, children, className = 'w-full min-w-0' }) => {
+  const prefersReducedMotion = useReducedMotion();
+
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={transitionKey}
+        initial={
+          prefersReducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 12 }
+        }
+        animate={{ opacity: 1, x: 0 }}
+        exit={
+          prefersReducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -6 }
+        }
+        transition={
+          prefersReducedMotion
+            ? { duration: 0 }
+            : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }
+        }
+        className={className}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+/**
+ * Shared scroll-direction hook that hides the top navigation bar when scrolling down
+ * and reveals it when scrolling up (or when near the top of the page / when keepVisible is true).
+ */
+export function useScrollHideHeader(keepVisible: boolean = false): boolean {
+  const [isHidden, setIsHidden] = useState(false);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    if (keepVisible) {
+      setIsHidden(false);
+    }
+  }, [keepVisible]);
+
+  useEffect(() => {
+    const THRESHOLD = 10;
+    const TOP_SAFE_OFFSET = 48;
+
+    const handleScroll = () => {
+      const currentY = window.scrollY || document.documentElement.scrollTop || 0;
+
+      if (keepVisible || currentY < TOP_SAFE_OFFSET) {
+        setIsHidden(false);
+        lastScrollY.current = currentY;
+        return;
+      }
+
+      const delta = currentY - lastScrollY.current;
+      if (Math.abs(delta) < THRESHOLD) {
+        return;
+      }
+
+      if (delta > 0) {
+        // Scrolling down -> hide top bar
+        setIsHidden(true);
+      } else {
+        // Scrolling up -> reveal top bar
+        setIsHidden(false);
+      }
+
+      lastScrollY.current = currentY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [keepVisible]);
+
+  return isHidden;
+}
+
 

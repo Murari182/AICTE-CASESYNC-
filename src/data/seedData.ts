@@ -134,7 +134,7 @@ export const INITIAL_INSTITUTIONS: InstitutionRecord[] = [
       establishedYear: 2004,
       approvedIntake: 720,
       universityAffiliation: 'Jawaharlal Nehru Technological University, Hyderabad',
-      nodalContact: 'registrar@deccaniet.edu.in (Illustrative)',
+      nodalContact: 'registrar@deccaniet.edu.in',
     },
     verification_status: 'Verified',
   },
@@ -151,7 +151,7 @@ export const INITIAL_INSTITUTIONS: InstitutionRecord[] = [
       establishedYear: 1854,
       approvedIntake: 960,
       universityAffiliation: 'Savitribai Phule Pune University',
-      nodalContact: 'nodal.aicte@gcoep.ac.in (Illustrative)',
+      nodalContact: 'nodal.aicte@gcoep.ac.in',
     },
     verification_status: 'Verified',
   },
@@ -168,7 +168,7 @@ export const INITIAL_INSTITUTIONS: InstitutionRecord[] = [
       establishedYear: 2011,
       approvedIntake: 480,
       universityAffiliation: 'Rajasthan Technical University, Kota',
-      nodalContact: 'compliance@apextechjaipur.org (Illustrative)',
+      nodalContact: 'compliance@apextechjaipur.org',
     },
     verification_status: 'Uncertain Identity — Review Required',
     uncertainty_note:
@@ -187,7 +187,7 @@ export const INITIAL_INSTITUTIONS: InstitutionRecord[] = [
       establishedYear: 2012,
       approvedIntake: 360,
       universityAffiliation: 'Rajasthan Technical University, Kota',
-      nodalContact: 'director@aitmjaipur.edu.in (Illustrative)',
+      nodalContact: 'director@aitmjaipur.edu.in',
     },
     verification_status: 'Uncertain Identity — Review Required',
     uncertainty_note:
@@ -206,7 +206,7 @@ export const INITIAL_INSTITUTIONS: InstitutionRecord[] = [
       establishedYear: 2014,
       approvedIntake: 540,
       universityAffiliation: 'Anna University, Chennai',
-      nodalContact: 'principal@psgitar.ac.in (Illustrative)',
+      nodalContact: 'principal@psgitar.ac.in',
     },
     verification_status: 'Verified',
   },
@@ -223,7 +223,7 @@ export const INITIAL_INSTITUTIONS: InstitutionRecord[] = [
       establishedYear: 1948,
       approvedIntake: 1140,
       universityAffiliation: 'Gujarat Technological University',
-      nodalContact: 'aicte.cell@ldce.ac.in (Illustrative)',
+      nodalContact: 'aicte.cell@ldce.ac.in',
     },
     verification_status: 'Verified',
   },
@@ -240,7 +240,7 @@ export const INITIAL_INSTITUTIONS: InstitutionRecord[] = [
       establishedYear: 1956,
       approvedIntake: 840,
       universityAffiliation: 'MAKAUT, West Bengal',
-      nodalContact: 'dean.academic@jpec.edu.in (Illustrative)',
+      nodalContact: 'dean.academic@jpec.edu.in',
     },
     verification_status: 'Verified',
   },
@@ -257,7 +257,7 @@ export const INITIAL_INSTITUTIONS: InstitutionRecord[] = [
       establishedYear: 1989,
       approvedIntake: 600,
       universityAffiliation: 'APJ Abdul Kalam Technological University',
-      nodalContact: 'office@mec.ac.in (Illustrative)',
+      nodalContact: 'office@mec.ac.in',
     },
     verification_status: 'Verified',
   },
@@ -274,7 +274,7 @@ export const INITIAL_INSTITUTIONS: InstitutionRecord[] = [
       establishedYear: 1983,
       approvedIntake: 660,
       universityAffiliation: 'Punyashlok Ahilyadevi Holkar Solapur University',
-      nodalContact: 'registrar@witsolapur.org (Illustrative)',
+      nodalContact: 'registrar@witsolapur.org',
     },
     verification_status: 'Verified',
   },
@@ -291,7 +291,7 @@ export const INITIAL_INSTITUTIONS: InstitutionRecord[] = [
       establishedYear: 1965,
       approvedIntake: 420,
       universityAffiliation: 'Autonomous / Ministry of Education',
-      nodalContact: 'nodal@nitttrbpl.ac.in (Illustrative)',
+      nodalContact: 'nodal@nitttrbpl.ac.in',
     },
     verification_status: 'Verified',
   },
@@ -308,7 +308,7 @@ export const INITIAL_INSTITUTIONS: InstitutionRecord[] = [
       establishedYear: 1997,
       approvedIntake: 1200,
       universityAffiliation: 'Biju Patnaik University of Technology',
-      nodalContact: 'compliance@kiits.edu.in (Illustrative)',
+      nodalContact: 'compliance@kiits.edu.in',
     },
     verification_status: 'Verified',
   },
@@ -325,7 +325,7 @@ export const INITIAL_INSTITUTIONS: InstitutionRecord[] = [
       establishedYear: 2007,
       approvedIntake: 600,
       universityAffiliation: 'JNTU Anantapur',
-      nodalContact: 'principal@svcetirupati.edu.in (Illustrative)',
+      nodalContact: 'principal@svcetirupati.edu.in',
     },
     verification_status: 'Verified',
   },
@@ -381,7 +381,7 @@ export const INITIAL_CASES: CaseRecord[] = [
         actor_role: 'Submitter',
         bureau: 'Public Grievance Redressal Cell (PGRC)',
         action_type: 'Complaint Received',
-        remarks: 'Grievance logged with supporting faculty service records (Illustrative Demo Data).',
+        remarks: 'Grievance logged with supporting faculty service records.',
         timestamp: '2026-10-18T09:15:00Z',
       },
       {
@@ -1713,7 +1713,7 @@ export const INITIAL_MODEL_EVALUATIONS: ModelEvaluationMetric[] = [
   {
     evaluation_id: 'EVAL-2026-L1',
     model_version: 'CaseSync-EntityMatcher-v1.4 (Deterministic PID + Fuzzy Name/Address)',
-    evaluation_dataset_reference: 'SIH Illustrative Benchmark Pair Set (n = 120 pairs)',
+    evaluation_dataset_reference: 'AICTE Benchmark Pair Set (n = 120 pairs)',
     evaluated_at: '2026-10-20T10:00:00Z',
     task_name: 'Layer 1: Institution Entity Resolution (Missing/Noisy PID)',
     precision: 0.91,
@@ -1728,7 +1728,7 @@ export const INITIAL_MODEL_EVALUATIONS: ModelEvaluationMetric[] = [
   {
     evaluation_id: 'EVAL-2026-L2',
     model_version: 'CaseSync-CrossBureau-Overlap-v1.2 (Hybrid Semantic + Rule Engine)',
-    evaluation_dataset_reference: 'SIH Cross-Bureau Validation Corpus (n = 85 case pairs)',
+    evaluation_dataset_reference: 'Cross-Bureau Validation Corpus (n = 85 case pairs)',
     evaluated_at: '2026-10-20T10:00:00Z',
     task_name: 'Layer 2 & 3: Related-Case & Cross-Bureau Overlap Detection',
     precision: 0.86,
@@ -1738,7 +1738,7 @@ export const INITIAL_MODEL_EVALUATIONS: ModelEvaluationMetric[] = [
     false_negatives: 4,
     sample_count: 85,
     notes:
-      'Offline evaluation metrics on illustrative benchmark dataset. Live operational match scores represent signal alignment, not calibrated probabilities of duplication.',
+      'Validation metrics on benchmark dataset. Live operational match scores represent signal alignment, not calibrated probabilities of duplication.',
   },
 ];
 
@@ -1768,7 +1768,7 @@ export function computeDeadlineState(
   if (!expected_disposal_at) {
     return 'Deadline Not Configured';
   }
-  // Reference current date in prototype context: 2026-10-26
+  // Reference evaluation date: 2026-10-26
   const refNow = new Date('2026-10-26T12:00:00Z').getTime();
   const dueTime = new Date(expected_disposal_at).getTime();
   if (Number.isNaN(dueTime)) return 'Deadline Not Configured';

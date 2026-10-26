@@ -47,6 +47,7 @@ import {
   AuditTrailView,
   TransfersAndEscalationsView,
 } from './views/TransfersAlertsAuditViews';
+import { useScrollHideHeader } from './ui/SharedComponents';
 
 interface NavItem {
   id: WorkspaceScreen;
@@ -88,6 +89,10 @@ export const WorkspaceApp: React.FC = () => {
   const [globalSearch, setGlobalSearch] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  const isTopBarHidden = useScrollHideHeader(
+    notificationsOpen || searchFocused || mobileMenuOpen
+  );
 
   const notificationRef = useRef<HTMLDivElement | null>(null);
 
@@ -428,7 +433,7 @@ export const WorkspaceApp: React.FC = () => {
             </button>
           </div>
 
-          {/* Role-Filtered Navigation Items with Left-Edge Vertical Accent Indicator */}
+          {/* Role-Filtered Navigation Items with Smooth Sliding Highlight & Left Accent Bar */}
           <nav aria-label="Workspace Sections" className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -442,19 +447,40 @@ export const WorkspaceApp: React.FC = () => {
                   title={sidebarCollapsed ? item.label : undefined}
                   className={`group relative overflow-hidden w-full flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl text-xs transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3478F6] ${
                     isActive
-                      ? 'bg-[#3478F6]/12 dark:bg-[#6EA1FF]/16 text-[#3478F6] dark:text-[#6EA1FF] font-bold border border-[#3478F6]/30 dark:border-[#6EA1FF]/30 shadow-xs'
+                      ? 'text-[#3478F6] dark:text-[#6EA1FF] font-bold'
                       : 'font-semibold text-theme-secondary border border-transparent hover:text-theme-primary hover:bg-[var(--bg-elevated)]'
                   }`}
                 >
-                  {/* Slim 3.5px Left-Edge Vertical Accent Bar on Active Item */}
-                  <span
-                    aria-hidden="true"
-                    className={`absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-gradient-to-b from-[#3478F6] to-[#4338F5] transition-opacity duration-200 ${
-                      isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-30'
-                    }`}
-                  />
+                  {isActive && (
+                    <motion.span
+                      layoutId="desktop-sidebar-active-bg"
+                      transition={{
+                        duration: 0.22,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                      className="absolute inset-0 rounded-xl bg-[#3478F6]/12 dark:bg-[#6EA1FF]/16 border border-[#3478F6]/30 dark:border-[#6EA1FF]/30 shadow-xs"
+                    />
+                  )}
 
-                  <div className="flex items-center gap-2.5 min-w-0">
+                  {/* Slim Left-Edge Vertical Accent Bar with Smooth Sliding Transition */}
+                  {isActive ? (
+                    <motion.span
+                      layoutId="desktop-sidebar-active-bar"
+                      aria-hidden="true"
+                      transition={{
+                        duration: 0.22,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                      className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-gradient-to-b from-[#3478F6] to-[#4338F5] z-10"
+                    />
+                  ) : (
+                    <span
+                      aria-hidden="true"
+                      className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-gradient-to-b from-[#3478F6] to-[#4338F5] opacity-0 group-hover:opacity-30 transition-opacity duration-200"
+                    />
+                  )}
+
+                  <div className="relative z-10 flex items-center gap-2.5 min-w-0">
                     <Icon
                       className={`w-4 h-4 shrink-0 transition-colors duration-200 ${
                         isActive
@@ -471,7 +497,7 @@ export const WorkspaceApp: React.FC = () => {
                     item.badge !== undefined &&
                     item.badge > 0 && (
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-mono-tabular font-bold shrink-0 transition-colors duration-200 ${
+                        className={`relative z-10 px-2 py-0.5 rounded-full text-[10px] font-mono-tabular font-bold shrink-0 transition-colors duration-200 ${
                           isActive
                             ? 'bg-[#3478F6] text-white'
                             : item.id === 'alerts'
@@ -488,13 +514,13 @@ export const WorkspaceApp: React.FC = () => {
           </nav>
         </div>
 
-        {/* Bottom Active Role Profile & Switch Role / Sign Out */}
+        {/* Bottom Active Account Profile & Sign Out */}
         <div className="p-4 border-t border-theme space-y-2.5">
           {!sidebarCollapsed && (
             <div className="neu-inset rounded-xl p-3 text-xs space-y-1">
               <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-blue">
                 <Shield className="w-3 h-3" />
-                Active Session Role
+                Authenticated Role
               </div>
               <div className="font-bold text-theme-primary truncate">
                 {roleProfile.shortLabel}
@@ -509,19 +535,19 @@ export const WorkspaceApp: React.FC = () => {
             <button
               onClick={() => openLoginScreen(activeRole, activeScreen)}
               className="neu-btn-secondary w-full px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer"
-              title="Switch Demo Role on Login Screen"
+              title="Authenticate with a different official account"
             >
               <UserCheck className="w-3.5 h-3.5 text-theme-blue shrink-0" />
-              {!sidebarCollapsed && <span>Switch Role</span>}
+              {!sidebarCollapsed && <span>Switch Account</span>}
             </button>
 
             <button
               onClick={signOutToHome}
               className="neu-btn-secondary w-full px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer"
-              title="Exit Demo Workspace to Public Home Page"
+              title="Sign Out to Public Home Page"
             >
               <Globe className="w-3.5 h-3.5 text-theme-secondary shrink-0" />
-              {!sidebarCollapsed && <span>Exit Demo / Home</span>}
+              {!sidebarCollapsed && <span>Sign Out</span>}
             </button>
           </div>
         </div>
@@ -612,7 +638,7 @@ export const WorkspaceApp: React.FC = () => {
             <div className="space-y-2 pt-3 border-t border-theme">
               <div className="neu-inset rounded-xl p-2.5 text-xs mb-1">
                 <div className="text-[10px] font-bold uppercase text-theme-blue">
-                  Active Role
+                  Authenticated Account
                 </div>
                 <div className="font-bold text-theme-primary truncate">
                   {roleProfile.shortLabel}
@@ -625,7 +651,7 @@ export const WorkspaceApp: React.FC = () => {
                 }}
                 className="neu-btn-secondary w-full py-2 rounded-xl text-xs font-semibold"
               >
-                Switch Demo Role
+                Switch Account
               </button>
               <button
                 onClick={() => {
@@ -634,7 +660,7 @@ export const WorkspaceApp: React.FC = () => {
                 }}
                 className="neu-btn-secondary w-full py-2 rounded-xl text-xs font-semibold"
               >
-                Exit Demo / Home
+                Sign Out
               </button>
             </div>
           </div>
@@ -643,8 +669,14 @@ export const WorkspaceApp: React.FC = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Sticky Top Navigation Bar — Remains stationary during section switches */}
-        <header className="sticky top-0 z-20 neu-sidebar border-b border-theme px-4 sm:px-6 py-3">
+        {/* Sticky Top Navigation Bar — Hides smoothly on scroll down, reveals on scroll up */}
+        <header
+          className={`sticky top-0 z-20 neu-sidebar border-b border-theme px-4 sm:px-6 py-3 transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            isTopBarHidden
+              ? '-translate-y-full opacity-0 pointer-events-none'
+              : 'translate-y-0 opacity-100'
+          }`}
+        >
           <div className="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-3">
             {/* Left: Mobile Menu Button + Breadcrumb */}
             <div className="flex items-center gap-3">
@@ -1017,7 +1049,7 @@ export const WorkspaceApp: React.FC = () => {
                 )}
               </button>
 
-              {/* Active Role Badge + Switch Role Button */}
+              {/* Authenticated Account Badge + Switch Account Button */}
               <div className="neu-inset px-3 py-1.5 rounded-xl flex items-center gap-2 text-xs">
                 <Shield className="w-3.5 h-3.5 text-theme-blue shrink-0" />
                 <span className="font-bold text-theme-primary hidden sm:inline">
@@ -1026,17 +1058,17 @@ export const WorkspaceApp: React.FC = () => {
                 <button
                   onClick={() => openLoginScreen(activeRole, activeScreen)}
                   className="text-theme-blue font-bold hover:underline cursor-pointer"
-                  title="Return to Login Role Selector to switch demo role"
+                  title="Authenticate with a different official account"
                 >
-                  Switch Role
+                  Account
                 </button>
               </div>
 
               <button
                 onClick={signOutToHome}
                 className="neu-btn-secondary p-2 rounded-xl cursor-pointer"
-                title="Sign Out to Public Home Page"
-                aria-label="Sign Out to Public Home Page"
+                title="Sign Out"
+                aria-label="Sign Out"
               >
                 <LogOut className="w-4 h-4 text-theme-secondary" />
               </button>

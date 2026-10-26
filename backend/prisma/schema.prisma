@@ -1,0 +1,174 @@
+// AICTE CaseSync Relational Database Schema (Prisma + PostgreSQL)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id        String   @id @default(uuid())
+  display_name   String
+  email          String   @unique
+  password_hash  String
+  role           String
+  bureau_scope   String
+  regional_scope String?
+  active_status  Boolean  @default(true)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@index([role])
+}
+
+model Institution {
+  institution_id      String          @id
+  aicte_permanent_id  String          @unique
+  name                String
+  normalized_name     String
+  institution_type    String
+  address             String
+  state               String
+  region              String
+  approved_intake     Int             @default(0)
+  affiliated_univ     String
+  established_year    Int
+  verification_status String          @default("Verified")
+  created_at          DateTime        @default(now())
+  updated_at          DateTime        @updatedAt
+  complaints          ComplaintCase[]
+  coordinations       CoordinationRecord[]
+  alerts              Alert[]
+
+  @@index([aicte_permanent_id])
+  @@index([region])
+}
+
+model ComplaintCase {
+  case_id              String       @id
+  institution_id       String
+  institution          Institution  @relation(fields: [institution_id], references: [institution_id])
+  received_at          DateTime
+  subject              String
+  description          String
+  category             String
+  priority             String
+  status               String
+  current_bureau       String
+  assigned_officer     String
+  last_action          String
+  last_action_at       DateTime
+  next_action          String
+  expected_disposal_at DateTime
+  overlap_status       String       @default("No Overlap")
+  linked_case_ids      String[]
+  created_at           DateTime     @default(now())
+  updated_at           DateTime     @updatedAt
+  actions              CaseAction[]
+  transfers            TransferRecord[]
+
+  @@index([institution_id])
+  @@index([current_bureau])
+  @@index([status])
+}
+
+model CaseRelation {
+  relation_id        String    @id
+  institution_id     String
+  case_id_a          String
+  case_id_b          String
+  bureau_a           String
+  bureau_b           String
+  relation_type      String
+  match_method       String
+  match_score        Int
+  review_status      String
+  reviewed_by        String?
+  reviewed_at        DateTime?
+  remarks            String
+  coordination_owner String
+  next_action        String
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+
+  @@unique([case_id_a, case_id_b])
+  @@index([institution_id])
+}
+
+model CoordinationRecord {
+  coordination_id    String      @id
+  institution_id     String
+  institution        Institution @relation(fields: [institution_id], references: [institution_id])
+  related_case_ids   String[]
+  involved_bureaus   String[]
+  coordination_owner String
+  agreed_next_action String
+  due_date           String
+  status             String
+  latest_remark      String
+  updated_at         DateTime    @updatedAt
+}
+
+model TransferRecord {
+  transfer_id          String        @id
+  case_id              String
+  complaint            ComplaintCase @relation(fields: [case_id], references: [case_id])
+  institution_id       String
+  originating_bureau   String
+  receiving_bureau     String
+  reason               String
+  transferring_officer String
+  receiving_officer    String
+  requested_at         DateTime      @default(now())
+  accepted_at          DateTime?
+  transfer_status      String
+  remarks              String
+}
+
+model Alert {
+  alert_id               String      @id
+  deduplication_key      String      @unique
+  title                  String
+  alert_type             String
+  severity               String
+  institution_id         String
+  institution            Institution @relation(fields: [institution_id], references: [institution_id])
+  case_ids               String[]
+  bureaus                String[]
+  reason                 String
+  recommended_action     String
+  assigned_to            String
+  created_at             DateTime    @default(now())
+  due_at                 DateTime
+  is_read                Boolean     @default(false)
+  lifecycle_status       String      @default("Active")
+  acknowledgement_status String      @default("Unacknowledged")
+  resolution_status      String      @default("Open")
+  resolution_reason      String?
+  resolved_by            String?
+  resolved_at            DateTime?
+
+  @@index([institution_id])
+  @@index([resolution_status])
+}
+
+model CaseAction {
+  action_id      String        @id
+  case_id        String
+  complaint      ComplaintCase @relation(fields: [case_id], references: [case_id])
+  institution_id String
+  actor          String
+  actor_role     String
+  bureau         String
+  action_type    String
+  previous_value String?
+  new_value      String?
+  remarks        String
+  reference_id   String?
+  timestamp      DateTime      @default(now())
+
+  @@index([case_id])
+  @@index([timestamp])
+}

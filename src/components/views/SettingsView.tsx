@@ -20,7 +20,7 @@ export const SettingsView: React.FC = () => {
     roleProfile,
     activeRole,
     saveSystemSettings,
-    resetDemoData,
+    resetSystemState,
   } = useCaseSync();
 
   const [draftSla, setDraftSla] = useState<SlaConfig>(slaConfig);
@@ -51,7 +51,7 @@ export const SettingsView: React.FC = () => {
             System Settings & Model Monitoring
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
-            Configure prototype disposal deadline thresholds, cross-Bureau overlap rules, and inspect documented offline evaluation metrics.
+            Configure institutional disposal deadline thresholds, cross-Bureau overlap rules, and inspect documented model evaluation metrics.
           </p>
         </div>
 
@@ -62,7 +62,7 @@ export const SettingsView: React.FC = () => {
               className="neu-btn-secondary px-4 py-2.5 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 text-[var(--status-critical)]"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              Reset SIH Demo Dataset
+              Reset Baseline Dataset
             </button>
           ) : (
             <div className="flex items-center gap-2 neu-inset px-3 py-1.5 rounded-xl">
@@ -71,7 +71,7 @@ export const SettingsView: React.FC = () => {
               </span>
               <button
                 onClick={async () => {
-                  await resetDemoData();
+                  await resetSystemState();
                   setConfirmReset(false);
                 }}
                 className="neu-btn-primary px-3 py-1 rounded-lg text-xs font-bold"
@@ -100,7 +100,7 @@ export const SettingsView: React.FC = () => {
               </h2>
             </div>
             <span className="text-xs text-[var(--text-muted)]">
-              Prototype SLA Rules (Not Statutory Mandates)
+              Configurable SLA Rules
             </span>
           </div>
 
@@ -307,12 +307,12 @@ export const SettingsView: React.FC = () => {
                 Restricted Model Monitoring & Offline Evaluation Metrics
               </h2>
               <p className="text-xs text-[var(--text-secondary)]">
-                Offline benchmark evaluation on documented SIH validation pairs — distinct from live operational match scores.
+                Validation benchmark evaluation on documented cross-Bureau case pairs — distinct from live operational match scores.
               </p>
             </div>
           </div>
           <span className="px-3 py-1 rounded-lg text-xs font-mono font-semibold bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--accent-blue)]">
-            Demo Matching Mode + Offline Benchmark
+            Hybrid Rule + Semantic Matching Engine
           </span>
         </div>
 
