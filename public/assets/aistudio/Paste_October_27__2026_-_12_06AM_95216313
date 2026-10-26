@@ -1,0 +1,1030 @@
+# MASTER BUILD PROMPT — AICTE CaseSync
+## Integrated Institution Complaint Monitoring and Cross-Bureau Coordination Platform | SIH Working Prototype
+
+### 1. PRIMARY OBJECTIVE
+
+Improve the existing AICTE CaseSync website and transform it into a professional, responsive, genuinely interactive working prototype for the Smart India Hackathon.
+
+The project addresses the following problem:
+
+AICTE receives complaints and grievances concerning technical education institutions from students, faculty members, stakeholders, and other concerned parties. These cases may be handled independently by the Regulation Bureau (RB), Public Grievance Redressal Cell (PGRC), Regional Offices, and other concerned Bureaus/Cells.
+
+Without a centralized institution-wise view, different Bureaus/Cells may act on complaints concerning the same institution without sufficient visibility into each other's activities. This can lead to duplicate work, delayed disposal, overlapping actions, and difficulty identifying the responsible Bureau or officer.
+
+Build a single-window platform that gives authorized officials a consolidated, institution-centric view of complaints, assignments, actions, transfers, escalations, deadlines, and potential overlaps.
+
+**The main product is an integrated institution complaint monitoring system, not a standalone ML classification application.**
+
+Do not make a large “AI Classification” section the center of the homepage or dashboard. ML must operate as an integrated backend capability supporting institution identification, related-case matching, and overlap detection. The primary interface must focus on institutions, complaints, Bureau/Cell coordination, actionable alerts, and case status.
+
+Preserve the existing website where useful, but correct its weak alignments, inconsistent spacing, nonfunctional controls, incomplete workflows, and visual inconsistencies.
+
+Do not replace the existing product with a generic template or start from a blank dashboard unless necessary.
+
+---
+
+### 2. PRODUCT IDENTITY AND DESIGN DIRECTION
+
+Product name: AICTE CaseSync
+
+Full description: Integrated Institution Complaint Monitoring and Status Dashboard
+
+Tagline: “One Institution. One Coordinated View.”
+
+Supporting message: “Connect complaints, coordinate Bureaus, and track every institutional case from receipt to disposal.”
+
+The platform must feel like a credible institutional government-tech application designed for daily use by authorized AICTE officials.
+
+Use the uploaded neumorphic reference image as a design reference, not as a layout to copy. Retain its soft surfaces, cool grey-blue background, rounded cards, blue/indigo accents, subtle raised elements, and polished controls. Adapt these elements to a dense, data-oriented case-management product.
+
+The interface should be attractive but practical. Prioritize readability, information hierarchy, efficient navigation, and quick identification of cases requiring action.
+
+#### Visual design system
+
+Light theme:
+
+- Application background: #E9EEF3.
+- Main content surfaces: #FFFFFF and #F5F7FA.
+- Primary text: #273449.
+- Secondary text: #66758A.
+- Primary blue: #3478F6.
+- Indigo: #4338F5.
+- Borders: #E0E6EE.
+- Success: #18885F.
+- Warning: #B97813.
+- Critical: #C83D50.
+
+Use the blue-indigo gradient sparingly for primary actions, active navigation, and selected indicators.
+
+Apply subtle neumorphic shadows to summary cards and floating panels, but use conventional borders and clean surfaces for tables, data-heavy lists, and complex forms.
+
+Suggested shadows:
+
+Raised:
+0 6px 18px rgba(80, 101, 130, 0.10), 0 -3px 12px rgba(255, 255, 255, 0.65).
+
+Inset:
+inset 2px 2px 5px rgba(80, 101, 130, 0.10), inset -2px -2px 5px rgba(255, 255, 255, 0.75).
+
+Typography: Inter or Manrope.
+
+Use a consistent 4px/8px spacing scale, 12–16px control radii, 18–24px card radii, and 28px radii for major panels.
+
+Keep body text readable. Do not use extremely faint text, excessive shadows, oversized headings, unnecessary gradients, or excessive rounded containers around every element.
+
+#### Mandatory dark theme
+
+Implement a real light/dark theme switcher in the top navigation.
+
+The dark theme must be fully designed, not merely a black background.
+
+Dark theme tokens:
+
+- Application background: #101722.
+- Sidebar: #141E2B.
+- Card surface: #192535.
+- Elevated surface: #202E40.
+- Primary text: #F0F4FA.
+- Secondary text: #A7B4C6.
+- Borders: #2D3B4E.
+- Primary blue: #6EA1FF.
+- Indigo: #8B8AFF.
+- Success: #49C99A.
+- Warning: #F4BD62.
+- Critical: #FF7788.
+
+Use subtle dark shadows and slightly brighter borders to distinguish surfaces.
+
+The theme switch must update the entire application, including the landing page, sidebar, tables, dropdowns, charts, modals, tooltips, notifications, and form controls.
+
+Persist the selected theme in local storage. On reload, restore the saved preference without a flash of the wrong theme where practical. Respect the system theme for first-time visitors if no preference is stored.
+
+Use an accessible sun/moon toggle with a tooltip and an appropriate accessible label.
+
+---
+
+### 3. INFORMATION ARCHITECTURE AND NAVIGATION
+
+Build a proper application shell with a persistent left sidebar and a compact top navigation bar.
+
+The sidebar must contain:
+
+1. Overview
+2. Institution Registry
+3. Complaint Cases
+4. Overlap Detection
+5. Bureau/Cell Coordination
+6. Transfers and Escalations
+7. Alerts and Notifications
+8. Reports and Analytics
+9. Audit Trail
+10. Settings
+
+Place the CaseSync logo and product name at the top.
+
+The bottom of the sidebar should display the active demo user's role, a profile menu, and a sign-out or exit-demo action as appropriate.
+
+The top bar should include:
+
+- Breadcrumb navigation.
+- Global search.
+- Notifications with unread count.
+- Light/dark theme switch.
+- Current demo user and role switcher.
+
+The sidebar must support collapse/expand on desktop and a proper drawer on mobile.
+
+Highlight the active navigation item. Every navigation item must open its corresponding working screen. Never leave menu entries that point to empty pages.
+
+Use consistent content widths, page gutters, headings, filters, and toolbar placement across all screens.
+
+---
+
+### 4. LANDING PAGE — MINIMAL AND PROFESSIONAL
+
+If the existing prototype has a public landing page, improve it rather than making the entire application visible in the first viewport.
+
+Create a restrained hero section:
+
+Eyebrow:
+“SMART INDIA HACKATHON • INSTITUTION CASE MONITORING”
+
+Main heading:
+“One institution. One coordinated view.”
+
+Description:
+“Monitor institution-related complaints across AICTE Bureaus and Cells, identify overlapping actions, and coordinate case resolution through one integrated dashboard.”
+
+Primary CTA: “Open Monitoring Dashboard”
+
+Secondary CTA: “Explore the Workflow”
+
+On the right, display a compact application preview showing:
+
+- One institution profile.
+- Two related complaint records.
+- Different Bureaus/Cells.
+- An overlap warning.
+- A coordination action.
+
+Label the data as illustrative demo data.
+
+Below the hero, add compact sections explaining:
+
+- Institution-wise case consolidation.
+- Cross-Bureau overlap detection.
+- Case movement and accountability.
+- Deadline monitoring.
+- Institution-wise and Bureau-wise reporting.
+
+Use smooth scrolling and subtle reveal animations. Do not turn the homepage into a long marketing site that hides the actual application.
+
+The primary CTA must open the interactive dashboard directly.
+
+If the existing prototype is already an authenticated workspace, prioritize the operational dashboard over introducing unnecessary landing-page navigation.
+
+---
+
+### 5. MAIN DASHBOARD — THE PRIMARY WORKING SCREEN
+
+The overview dashboard is the most important screen.
+
+The first viewport should answer these questions immediately:
+
+- How many complaints are being monitored?
+- How many are pending, under process, disposed, transferred, or escalated?
+- Which cases need attention?
+- Which institutions have complaints involving multiple Bureaus/Cells?
+- Which deadlines are approaching or overdue?
+- Which Bureau/Cell is currently responsible?
+
+#### A. Dashboard heading
+
+Title: “Institution Complaint Monitoring”
+
+Subtitle: “Consolidated status and coordination overview across Bureaus and Cells.”
+
+Show the last data update timestamp and a refresh action that actually refreshes the displayed dataset.
+
+Provide a date-range filter and optional Bureau/Cell and region filters.
+
+#### B. KPI cards
+
+Create six aligned summary cards:
+
+1. Total Cases
+2. Pending Cases
+3. Under Process
+4. Disposed Cases
+5. Transferred Cases
+6. Overdue Cases
+
+Each card must show a count, concise label, and small relevant icon.
+
+Optional percentage changes may only appear when they are calculated from real comparison-period data. Otherwise, omit them.
+
+Make cards clickable. Clicking a card should navigate to the complaint list with the relevant status filter applied.
+
+All metrics must be calculated from the same case dataset used by the case table and reports.
+
+Do not hardcode contradictory counts in different widgets.
+
+#### C. Priority alerts panel
+
+Create a clearly visible “Requires Attention” section with alert types:
+
+- Potential Overlapping Cases.
+- Cases Approaching Deadline.
+- Overdue Cases.
+- Cases Awaiting Bureau Coordination.
+- Cases Pending Transfer Acceptance.
+- Cases Requiring Senior Review.
+
+Each alert should show the affected institution, case IDs, responsible Bureau/Cells, alert reason, and the next recommended action.
+
+Provide working actions such as:
+
+- Review Overlap.
+- Open Case.
+- View Institution.
+- Coordinate Case.
+
+Prioritize critical cases without using excessive red styling across the entire dashboard.
+
+#### D. Institution-level activity
+
+Create a “Institutions Requiring Attention” table.
+
+Columns:
+
+Institution Name | AICTE Permanent ID | Region | Total Open Cases | Bureaus/Cells Involved | Overlap Status | Oldest Pending Case | Action
+
+Display a visible overlap badge when multiple relevant cases are detected.
+
+Clicking a row must open the complete institution profile.
+
+#### E. Bureau/Cell workload
+
+Show a compact workload breakdown for:
+
+- Regulation Bureau (RB).
+- Public Grievance Redressal Cell (PGRC).
+- Other concerned Bureaus/Cells.
+- Regional Offices/Centres.
+
+Display pending, under-process, disposed, transferred, and overdue case counts where applicable.
+
+Use charts and compact progress indicators with clear labels.
+
+Do not fabricate official performance statistics.
+
+#### F. Recent case activity
+
+Include a compact timeline of the latest recorded events:
+
+- Complaint received.
+- Case assigned.
+- Related case detected.
+- Coordination requested.
+- Case transferred.
+- Officer updated status.
+- Case disposed.
+
+Every activity must be derived from the stored event history.
+
+---
+
+### 6. INSTITUTION REGISTRY — CENTRALIZED INSTITUTION PROFILE
+
+This feature is fundamental to the problem statement.
+
+Create an institution registry with a searchable, filterable table.
+
+Fields:
+
+- AICTE Permanent ID / Institution ID.
+- Institution name.
+- Institution type, when available.
+- Address.
+- State and region.
+- Available institution metadata.
+- Total linked complaints.
+- Open cases.
+- Bureaus/Cells currently involved.
+- Overlap status.
+- Last case activity.
+
+Provide actions to:
+
+- Open institution profile.
+- View all associated complaints.
+- Identify overlapping cases.
+- View institution action history.
+- Link an additional case to the institution, subject to permissions.
+
+Provide institution creation or import functionality only if the current prototype supports it.
+
+Do not invent real institutional records or claim that sample institutions are officially verified.
+
+#### Institution detail page
+
+Create a dedicated institution profile with a prominent identity header:
+
+- Institution name.
+- AICTE Permanent ID.
+- Address and region.
+- Available institution details.
+- Number of associated complaints.
+- Current open cases.
+- Involved Bureaus/Cells.
+- Overlap warning, if applicable.
+
+Organize the remaining content into tabs:
+
+1. Overview
+2. All Complaints
+3. Cross-Bureau Coordination
+4. Action History
+5. Reports
+
+The Overview tab should show a consolidated summary of the institution's complaint history.
+
+The All Complaints tab should list every linked case, irrespective of the Bureau/Cell handling it.
+
+The Cross-Bureau Coordination tab should show related cases side by side and highlight potential duplicate actions.
+
+The Action History tab should display a chronological timeline across the institution's linked cases.
+
+The Reports tab should summarize case counts, status, category, Bureau/Cell involvement, and ageing.
+
+The central principle is that officials must be able to understand an institution's overall case situation without opening each Bureau's system independently.
+
+---
+
+### 7. COMPLAINT CASE MANAGEMENT
+
+Create a complete complaint register with functional search, filters, sorting, and case details.
+
+Each complaint record should contain:
+
+- Unique Complaint/Case ID.
+- Receipt date.
+- Institution ID.
+- Institution name.
+- Complaint subject.
+- Complaint description.
+- Complaint category.
+- Current status.
+- Current Bureau/Cell.
+- Assigned officer.
+- Priority.
+- Last action taken.
+- Last action timestamp.
+- Next action required.
+- Expected disposal date.
+- Transfer history.
+- Linked or potentially overlapping cases.
+- Supporting document references, where supported.
+
+Use the following status values consistently:
+
+- Received.
+- Pending.
+- Under Process.
+- Transferred.
+- Escalated.
+- Disposed.
+
+Use a separate overdue indicator instead of making “Overdue” a mutually exclusive workflow status.
+
+Provide filters for:
+
+- Institution name.
+- AICTE Permanent ID.
+- Complaint/Case ID.
+- Bureau/Cell.
+- Region.
+- Category.
+- Status.
+- Priority.
+- Overlap status.
+- Date range.
+- Assigned officer.
+
+Add a global search that can find cases and institutions from their IDs, names, or references.
+
+The search should return meaningful results, not just filter a hardcoded visual list.
+
+#### Case detail screen
+
+When an authorized user opens a case, show:
+
+1. Case overview.
+2. Institution details.
+3. Current status and priority.
+4. Current Bureau/Cell and assigned officer.
+5. Last action and next required action.
+6. Expected disposal date.
+7. Linked related cases.
+8. Overlap and coordination information.
+9. Chronological workflow timeline.
+10. Supporting documents, where implemented.
+
+Provide appropriate actions:
+
+- Update Status.
+- Add Action Remark.
+- Assign Officer.
+- Transfer Case.
+- Escalate Case.
+- Link Related Case.
+- Request Coordination.
+- Mark as Disposed, subject to permissions.
+
+Every successful mutation must update the stored case record, relevant counters, associated alerts, and activity history.
+
+Ask for confirmation before irreversible or high-impact actions.
+
+---
+
+### 8. CROSS-BUREAU OVERLAP DETECTION — CORE INNOVATION
+
+This is the most important differentiating feature of the solution.
+
+Create a dedicated “Overlap Detection” screen with a list of institutions where complaints may be related across Bureaus/Cells.
+
+The system must identify situations such as:
+
+Institution A → Complaint received by PGRC → Case under process.
+
+Institution A → Complaint received by RB → Regulatory action initiated.
+
+When the records indicate a potential conflict or duplicated effort, display:
+
+“Potential Overlapping Cases — Coordination Required.”
+
+The purpose is not merely to detect duplicate complaint text. It is to identify institution-level coordination needs, including different complaints concerning the same institution that could lead to overlapping actions.
+
+#### Overlap detection logic
+
+Implement the following layered process:
+
+**Layer 1: Institution identity matching**
+
+Use the AICTE Permanent ID as the preferred institution identity key.
+
+When a reliable Permanent ID is available and matches, associate the complaints with the same institution.
+
+When IDs are missing, use institution name normalization, alias matching, address and region information, and other available institution metadata.
+
+Do not automatically merge two institution records based only on similar names. Present uncertain identity matches for human verification.
+
+**Layer 2: Case relationship assessment**
+
+For complaints associated with the same institution, assess:
+
+- Complaint category.
+- Normalized subject and description.
+- Relevant references and dates.
+- Current and historical Bureau/Cell assignments.
+- Action types and current workflow states.
+- Existing linked-case relationships.
+
+**Layer 3: Cross-Bureau coordination rules**
+
+Generate a potential overlap alert when relevant cases concern the same institution and satisfy configurable relationship rules.
+
+Examples:
+
+- Related cases are being processed by RB and PGRC simultaneously.
+- Similar regulatory actions may already have been initiated.
+- Multiple Bureaus are acting on the same reported issue.
+- A transferred case remains active with the originating Bureau without an acknowledged handoff.
+- Two cases have sufficiently similar descriptions and compatible institution identities to warrant review.
+
+Do not automatically assume that every complaint about the same institution is a duplicate. Different complaints may legitimately require separate actions.
+
+**Layer 4: Risk and confidence assessment**
+
+Assign each candidate relationship a clear label:
+
+- Confirmed Related Cases.
+- Potential Overlap — Review Required.
+- Institution Identity Uncertain.
+- Not Related — Reviewed.
+
+Where the matching algorithm provides a meaningful score, show a match confidence indicator and a concise explanation of the matching signals.
+
+Do not treat a raw similarity score as a verified probability of duplication.
+
+**Layer 5: Human review**
+
+Provide authorized officials with the ability to:
+
+- Confirm the relationship.
+- Reject the suggested relationship.
+- Mark the cases as separate matters.
+- Link the cases without merging their individual identities.
+- Add coordination remarks.
+- Assign a coordination owner.
+- Record the next required action.
+
+Every decision must create an audit event with the reviewer, timestamp, decision, and remarks.
+
+**Critical business rule:** Never automatically merge complaint records, erase separate case IDs, or close a case simply because a potential overlap was detected. Detection should trigger review and coordination, not silently replace official decisions.
+
+---
+
+### 9. INTEGRATED MACHINE LEARNING — CORE ALGORITHM, NOT A PUBLIC-FACING FEATURE PAGE
+
+The ML component must operate behind the main workflow. Do not create a large standalone AI classification page that distracts from the actual institutional monitoring objective.
+
+The core algorithm should support:
+
+1. Institution entity resolution where identifiers are missing or inconsistent.
+2. Candidate related-complaint retrieval.
+3. Semantic similarity between complaint descriptions.
+4. Category or issue compatibility, when useful.
+5. Prioritization of potential overlaps for human review.
+6. Confidence and uncertainty reporting for authorized reviewers.
+
+Use reliable deterministic rules first for exact institution-ID matching. Use fuzzy matching or an ML-assisted approach for uncertain identity matches and complaint relationships.
+
+The algorithm must not treat text similarity alone as sufficient evidence that two cases are duplicates.
+
+#### Recommended inference workflow
+
+Incoming complaint
+→ Institution identity resolution
+→ Existing institution case retrieval
+→ Candidate related-case comparison
+→ Rule-based and/or ML-assisted relationship scoring
+→ Potential overlap alert
+→ Human review
+→ Confirmed relationship or dismissed alert
+→ Audit trail and coordinated action.
+
+The user interface should show the result and operational meaning, rather than exposing the full technical algorithm to every user.
+
+#### Officer-facing ML information
+
+Authorized officers should be able to access a compact “Matching Evidence” or “Decision Support Details” panel.
+
+Show:
+
+- Matching institution identifiers or identity evidence.
+- Relevant category or subject similarities.
+- Related case IDs.
+- Involved Bureaus/Cells.
+- Current case statuses.
+- Match confidence or similarity score, when available.
+- Why the system raised the alert.
+- What information is missing or uncertain.
+- Whether a human reviewer has confirmed the relationship.
+
+Do not show an arbitrary “94% AI accuracy” indicator for individual predictions.
+
+#### Model performance and accuracy
+
+Provide a restricted model-monitoring panel for authorized administrators and designated officers.
+
+Display actual evaluation metrics only when they have been calculated from a documented evaluation dataset.
+
+Depending on the implemented task, relevant metrics may include:
+
+- Institution entity-matching precision and recall.
+- Related-case detection precision and recall.
+- F1 score.
+- False-positive and false-negative counts.
+- Human review confirmation rate.
+- Performance by institution matching method or case category, when the sample size supports meaningful comparison.
+
+Clearly distinguish offline model evaluation from live operational match confidence.
+
+For example, “Evaluation F1: 0.87” is an evaluation result; it is not the same as “This pair has an 87% probability of being duplicates.”
+
+If the real model or evaluation metrics are not connected, show “Model evaluation not configured” or “Demo matching mode.” Never invent accuracy or performance numbers.
+
+---
+
+### 10. BUREAU/CELL COORDINATION WORKSPACE
+
+Create a dedicated workspace for coordinating cases across Bureaus and Cells.
+
+The screen should show:
+
+- Cases with multiple Bureaus involved.
+- Confirmed related cases.
+- Pending coordination requests.
+- Cases awaiting transfer acceptance.
+- Cases with conflicting or unclear next actions.
+- Assigned coordination owner.
+- Outstanding decisions.
+
+For each coordination item, display a consolidated view of the related case IDs, institution, originating Bureau, current Bureau, current status, and latest action.
+
+Provide working actions:
+
+- Request Coordination.
+- Add Coordination Remark.
+- Assign Coordination Owner.
+- Record Agreed Next Action.
+- Acknowledge Transfer.
+- Resolve Coordination Alert.
+
+Record all coordination decisions in the activity history.
+
+Do not force unrelated cases into a single workflow. Related cases may retain independent owners, statuses, and disposal dates while sharing a coordination record.
+
+---
+
+### 11. TRANSFERS, ESCALATIONS, AND WORKFLOW HISTORY
+
+Build an explicit transfer and escalation workflow.
+
+A transfer should capture:
+
+- Case ID.
+- Originating Bureau/Cell.
+- Receiving Bureau/Cell.
+- Reason for transfer.
+- Transferring officer.
+- Transfer timestamp.
+- Handover remarks.
+- Acceptance status.
+- Receiving officer, when assigned.
+
+Use clear transfer states such as:
+
+- Transfer Requested.
+- Awaiting Acceptance.
+- Accepted.
+- Rejected / Returned for Clarification.
+
+Keep the case's ownership and handoff state consistent. Do not silently mark a case as transferred without recording the intended recipient and transfer event.
+
+Escalation records should include:
+
+- Reason.
+- Escalation level.
+- Responsible authority or destination.
+- Timestamp.
+- Required next action.
+- Resolution or acknowledgement state.
+
+Every case should have a chronological action timeline.
+
+Each event should include:
+
+- Timestamp.
+- Action type.
+- Previous and new status, where relevant.
+- Responsible officer.
+- Bureau/Cell.
+- Remarks.
+- Related coordination or transfer reference.
+
+Never display fake activity timestamps as though they represent actual official actions. Use clearly labelled illustrative timestamps for seeded demo records.
+
+---
+
+### 12. ALERTS, DEADLINES, AND SLA MONITORING
+
+Create a centralized alert center.
+
+Supported alert types:
+
+- Potential overlap detected.
+- Institution identity requires verification.
+- Case approaching disposal deadline.
+- Case overdue.
+- Coordination request awaiting response.
+- Transfer awaiting acceptance.
+- Escalation awaiting action.
+- Required action not recorded within the configured period.
+
+Make deadline thresholds configurable in settings. Do not assume an official SLA or statutory deadline without a verified source or explicit configuration.
+
+Each case should have a next action and, where applicable, an expected disposal date.
+
+Use clear deadline labels:
+
+- On Track.
+- Due Soon.
+- Overdue.
+- Deadline Not Configured.
+
+Provide filtering by severity, Bureau/Cell, institution, alert type, and acknowledgement status.
+
+Allow authorized users to acknowledge, assign, resolve, or dismiss alerts with a reason.
+
+Alerts should update when relevant case states or dates change.
+
+---
+
+### 13. REPORTS AND ANALYTICS
+
+Create a professional reporting workspace with date filters, Bureau/Cell filters, and region filters.
+
+Provide these report categories:
+
+1. Institution-wise Complaint History
+2. Bureau/Cell-wise Workload
+3. Region-wise Cases
+4. Status-wise Case Distribution
+5. Pending Case Ageing
+6. Overlapping and Related Cases
+7. Transfers and Escalations
+8. Monthly and Quarterly Trends
+9. Disposal and Resolution Metrics
+
+Use appropriate visualizations:
+
+- Bar charts for Bureau/Cell workloads.
+- Stacked bars for case statuses.
+- Line charts for monthly case trends.
+- Horizontal bars for region-wise counts.
+- Ageing buckets for pending cases.
+- Tables for institution-wise and overlap reports.
+
+All charts and summary figures must derive from the actual application dataset.
+
+Define report calculations clearly. For example, distinguish the number of complaints from the number of unique institutions and from the number of confirmed related-case groups.
+
+Avoid implying that a high number of complaints necessarily indicates institutional wrongdoing.
+
+Add export to CSV for supported reports, with appropriate permissions. Clearly label generated reports as prototype outputs when using sample data.
+
+---
+
+### 14. ROLE-BASED ACCESS AND HUMAN-IN-THE-LOOP REVIEW
+
+Implement an instant role switcher inside the demo workspace so judges can demonstrate different roles without repeatedly signing out.
+
+Clearly mark it as demo role switching. It must not be represented as production authentication.
+
+Create these demo roles:
+
+**Administrator**
+
+- View all institutions and cases.
+- Manage prototype routing and matching configuration.
+- Review user roles in the demo.
+- View reports and audit history.
+- Access model-monitoring details.
+- Manage system-level settings.
+
+**Regulation Bureau Officer (RB)**
+
+- View permitted cases.
+- Update cases assigned to the RB.
+- Review overlap alerts involving RB cases.
+- Record actions and coordinate with other Bureaus.
+- Request or process transfers according to configured permissions.
+
+**PGRC Officer**
+
+- View permitted PGRC cases.
+- Record grievance processing actions.
+- Review related institutional cases.
+- Participate in coordination.
+- Update statuses and transfer information according to permissions.
+
+**Regional Officer**
+
+- View permitted regional institution and case records.
+- Monitor local case progress.
+- Update authorized fields.
+- Raise coordination requests.
+
+**Senior Management / Competent Authority**
+
+- View consolidated monitoring dashboards and reports.
+- Review overdue and escalated cases.
+- Monitor inter-Bureau coordination and unresolved overlaps.
+- Access sensitive case details only where the configured permissions allow it.
+
+**Submitter, if included**
+
+- Submit a complaint.
+- View permitted submission information.
+- Track status without access to restricted internal remarks or unrelated institutions' cases.
+
+The role switcher must immediately change the visible navigation, permitted actions, data scope, and relevant dashboard summaries.
+
+If a role is not permitted to perform an action, hide or disable that action with a clear explanation.
+
+Do not implement security through visual hiding alone in a production system. Backend authorization must enforce the same permissions. In frontend-only demo mode, label the role switcher as simulated authorization.
+
+---
+
+### 15. FIX ALIGNMENT, SPACING, AND RESPONSIVENESS
+
+The current interface has some alignment and spacing problems. Audit every screen systematically.
+
+Apply these mandatory layout rules:
+
+- Use one shared content container and consistent page gutters.
+- Align page headings, filters, cards, tables, and section boundaries.
+- Ensure KPI cards have equal heights and consistent internal padding.
+- Keep icon sizes, label baselines, card titles, and badge alignment consistent.
+- Use a consistent grid with predictable gaps.
+- Avoid cards with uneven widths or inconsistent vertical spacing.
+- Prevent text from overlapping icons, buttons, badges, or chart labels.
+- Align form labels above inputs and keep helper text within the field layout.
+- Keep table headers and cell padding consistent.
+- Prevent clipped dropdowns, overflowing modals, and content extending beyond cards.
+- Use consistent page-heading and toolbar placement across all screens.
+- Maintain a clear hierarchy between page title, section title, metadata, and helper text.
+- Ensure empty states and loading states do not cause major layout shifts.
+- Use consistent spacing between tables, filters, alerts, and section headings.
+
+Do not solve alignment problems by inserting arbitrary margins into individual elements. Fix the underlying grid, flexbox, sizing, and spacing rules.
+
+Use responsive CSS grid and flexbox with sensible minimum widths. Tables should use horizontal scrolling or a mobile-specific compact presentation when necessary.
+
+Test every screen at approximately 1440px, 1024px, 768px, and 390px viewport widths.
+
+No horizontal overflow should appear on the overall page.
+
+---
+
+### 16. FUNCTIONAL BACKEND AND DATA MODEL
+
+Make the prototype behave like a real application rather than a static visual mockup.
+
+Separate the UI, domain logic, data persistence, and ML inference into clear modules.
+
+Use the existing configured backend and database if available. Do not replace a functioning backend with frontend-only hardcoded data.
+
+If no backend exists, build a coherent local prototype using local storage or IndexedDB and a deterministic demo matching engine. Keep the interfaces modular so a real API and trained model can be integrated later.
+
+Suggested entities:
+
+**Institution**
+
+institution_id, aicte_permanent_id, name, normalized_name, address, state, region, metadata, verification_status.
+
+**ComplaintCase**
+
+case_id, institution_id, received_at, subject, description, category, status, priority, current_bureau, assigned_officer, last_action_at, next_action, expected_disposal_at, created_at, updated_at.
+
+**CaseRelation**
+
+relation_id, case_id_a, case_id_b, relation_type, match_method, match_score, review_status, reviewed_by, reviewed_at, remarks.
+
+**CoordinationRecord**
+
+coordination_id, institution_id, related_case_ids, coordination_owner, involved_bureaus, agreed_next_action, due_date, status.
+
+**CaseAction**
+
+action_id, case_id, actor, actor_role, bureau, action_type, previous_value, new_value, remarks, timestamp.
+
+**TransferRecord**
+
+transfer_id, case_id, originating_bureau, receiving_bureau, reason, requested_at, accepted_at, transfer_status, remarks.
+
+**Alert**
+
+alert_id, alert_type, case_id, institution_id, severity, created_at, due_at, assigned_to, acknowledgement_status, resolution_status.
+
+**User / DemoRole**
+
+user_id, display_name, role, permitted_scope, active_status.
+
+**ModelEvaluation**
+
+evaluation_id, model_version, evaluation_dataset_reference, evaluated_at, metric_name, metric_value, sample_count, notes.
+
+Use stable identifiers and explicit relationships between entities.
+
+Use one source of truth for cases and institutions. Calculate dashboard metrics and reports from these records instead of maintaining separate hardcoded values.
+
+When the user creates a case, update the institution's case history, applicable alerts, and related-case checks.
+
+When a case is transferred, update the workflow state and transfer history.
+
+When an overlap is reviewed, update the relationship record and audit trail.
+
+When a case is disposed, update the current status and relevant analytics.
+
+When the theme is changed, persist the preference without affecting case data.
+
+If data is stored only in the browser, explain that the prototype is local to the current browser and is not a shared real-time multi-user production system.
+
+---
+
+### 17. SAMPLE DATA FOR A CONVINCING DEMONSTRATION
+
+Seed the application with a small, coherent, internally consistent illustrative dataset.
+
+Include:
+
+- Approximately 12–20 illustrative institutions.
+- Approximately 30–50 complaint records.
+- Cases involving RB, PGRC, and other example Bureaus/Cells.
+- Pending, under-process, disposed, transferred, and escalated cases.
+- A mixture of ordinary cases and potential overlap scenarios.
+- Cases approaching or exceeding configured prototype deadlines.
+- Related cases with independent IDs and histories.
+- Several cases with no overlap, to demonstrate that the system does not flag everything.
+
+Include at least three deliberate cross-Bureau demonstration scenarios:
+
+Scenario A — Potential Overlap
+
+The same institution has an RB case and a PGRC case with related descriptions and active actions. The system raises a coordination alert for officer review.
+
+Scenario B — Same Institution, Different Issues
+
+Two complaints belong to the same institution but concern unrelated matters. The institution profile consolidates both complaints, but the algorithm does not automatically classify them as duplicates.
+
+Scenario C — Uncertain Institution Identity
+
+Two institution records have similar names but incomplete or conflicting identifiers. The system asks for identity verification rather than automatically merging the records.
+
+Add one transfer workflow and one confirmed-related-case workflow with action history.
+
+Ensure all sample cases, counts, alerts, charts, and reports are consistent.
+
+Clearly label seeded records as illustrative demonstration data, not official AICTE records.
+
+---
+
+### 18. DEMONSTRATION FLOW FOR SIH JUDGES
+
+Make it possible to demonstrate the complete workflow in approximately three minutes.
+
+**Step 1 — Open the Dashboard**
+
+Show consolidated case totals, institution alerts, Bureau workloads, and overdue cases.
+
+**Step 2 — Open an Institution Profile**
+
+Select an institution with multiple complaints and show its complete history across Bureaus/Cells.
+
+**Step 3 — Demonstrate Overlap Detection**
+
+Open the related RB and PGRC cases. Show the reason for the suggested relationship and the need for coordination.
+
+**Step 4 — Switch to a Bureau Officer**
+
+Use the instant role switcher. Review the suggested relationship and confirm it, reject it, or mark it as a separate matter.
+
+**Step 5 — Coordinate the Cases**
+
+Record the coordination owner and next action. Show the updated activity history.
+
+**Step 6 — Transfer or Update a Case**
+
+Demonstrate a transfer request, acceptance, or status update. Verify that the institution profile and dashboard reflect the change.
+
+**Step 7 — Generate an Institution-wise Report**
+
+Show the consolidated case history and export a CSV if enabled.
+
+**Step 8 — Switch to Dark Mode**
+
+Show the complete application in dark theme without losing readability or alignment.
+
+Every step must work through real interactions with the prototype's data layer. Do not simulate success using a toast without updating the underlying record.
+
+---
+
+### 19. ACCEPTANCE TESTS — DO NOT SKIP
+
+Before declaring the prototype complete, verify:
+
+1. Light and dark themes work on every page and persist after refresh.
+2. The main dashboard numbers agree with the case register.
+3. Global search finds institutions and cases by their IDs and names.
+4. Opening an institution displays all linked cases across Bureaus/Cells.
+5. Exact matching Permanent IDs take precedence over fuzzy name similarity.
+6. Uncertain institution matches require review.
+7. Potential overlaps are explained and do not automatically merge cases.
+8. Confirmed related cases remain independently identifiable.
+9. Officer review decisions persist and appear in the audit history.
+10. Case status changes update all relevant views.
+11. Transfers record their origin, destination, state, and action history.
+12. Configured deadline rules generate appropriate alerts.
+13. Filters and reports use the same underlying dataset.
+14. Role switching changes the visible permissions and available actions.
+15. Unauthorized actions are rejected by the appropriate enforcement layer.
+16. Buttons, dropdowns, modals, forms, and sidebar links work.
+17. The interface remains aligned at desktop, tablet, and mobile sizes.
+18. No placeholder lorem ipsum, fake model accuracy, dead buttons, broken routes, or contradictory sample statistics remain.
+19. The demo can be reset to a known starting state.
+20. The application clearly distinguishes prototype behavior from real institutional integrations.
+
+### FINAL BUILD INSTRUCTION
+
+Upgrade the existing AICTE CaseSync prototype into a complete institution-centric complaint monitoring and cross-Bureau coordination application.
+
+Prioritize the centralized dashboard, institution profiles, complaint tracking, overlap detection, human review, coordination workflow, deadline alerts, reports, and audit history.
+
+Preserve the reference image's soft neumorphic visual style, improve all alignment and responsive behavior, and implement a complete dark theme.
+
+Keep the machine-learning algorithm behind the workflow. Show authorized officers relevant match evidence, meaningful confidence information, and genuine evaluation metrics only when available.
+
+The final result must look and behave like a coherent working SIH prototype, not a static design, not a generic admin template, and not an AI classification showcase.
