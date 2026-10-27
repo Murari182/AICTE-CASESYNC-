@@ -4,10 +4,13 @@ import {
   AlertTriangle,
   ArrowRight,
   ArrowRightLeft,
+  ArrowUpDown,
   BarChart3,
   Bell,
   Building2,
+  Check,
   CheckCheck,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -56,6 +59,14 @@ interface NavItem {
   badge?: number;
 }
 
+interface BreadcrumbSegment {
+  id: string;
+  label: string;
+  badge?: string;
+  onSelect?: () => void;
+  hideOnMobile?: boolean;
+}
+
 export const WorkspaceApp: React.FC = () => {
   const {
     activeScreen,
@@ -90,11 +101,16 @@ export const WorkspaceApp: React.FC = () => {
   const [globalSearch, setGlobalSearch] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [breadcrumbMenuOpen, setBreadcrumbMenuOpen] = useState(false);
+  const [quickJumpSort, setQuickJumpSort] = useState<
+    'default' | 'name' | 'badge'
+  >('default');
 
   // Keep top navigation bar permanently visible so search, alerts, role switcher, and breadcrumbs are always accessible
   const isTopBarHidden = false;
 
   const notificationRef = useRef<HTMLDivElement | null>(null);
+  const breadcrumbMenuRef = useRef<HTMLLIElement | null>(null);
 
   // Synchronize activeScreen with browser history (back/forward navigation)
   useEffect(() => {
@@ -125,11 +141,12 @@ export const WorkspaceApp: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [roleProfile.allowedScreens, setActiveScreen]);
 
-  // Close Notifications Popover and Mobile Drawer on Escape or outside click
+  // Close Notifications Popover, Breadcrumb Quick Menu, and Mobile Drawer on Escape or outside click
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setNotificationsOpen(false);
+        setBreadcrumbMenuOpen(false);
         setMobileMenuOpen(false);
         setSearchFocused(false);
       }
@@ -143,6 +160,13 @@ export const WorkspaceApp: React.FC = () => {
       ) {
         setNotificationsOpen(false);
       }
+      if (
+        breadcrumbMenuOpen &&
+        breadcrumbMenuRef.current &&
+        !breadcrumbMenuRef.current.contains(event.target as Node)
+      ) {
+        setBreadcrumbMenuOpen(false);
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -151,7 +175,7 @@ export const WorkspaceApp: React.FC = () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('mousedown', handleMouseDown);
     };
-  }, [notificationsOpen]);
+  }, [notificationsOpen, breadcrumbMenuOpen]);
 
   const pendingOverlapsCount = relations.filter(
     (r) =>
@@ -261,6 +285,17 @@ export const WorkspaceApp: React.FC = () => {
     ]
   );
 
+  // Sort Quick Jump items by workflow order, alphabetical name, or badge/notification count
+  const sortedQuickJumpItems = useMemo(() => {
+    if (quickJumpSort === 'name') {
+      return [...navItems].sort((a, b) => a.label.localeCompare(b.label));
+    }
+    if (quickJumpSort === 'badge') {
+      return [...navItems].sort((a, b) => (b.badge ?? 0) - (a.badge ?? 0));
+    }
+    return navItems;
+  }, [navItems, quickJumpSort]);
+
   // Determine whether a sidebar item is active (including parent-section highlighting for nested detail pages)
   const isNavItemActive = (itemId: WorkspaceScreen): boolean => {
     if (activeScreen === itemId) return true;
@@ -302,43 +337,132 @@ export const WorkspaceApp: React.FC = () => {
     return { matchedInstitutions, matchedCases };
   }, [globalSearch, institutions, cases]);
 
-  const breadcrumbLabel = useMemo(() => {
-    switch (activeScreen) {
-      case 'overview':
-        return 'Overview Dashboard';
-      case 'institutions':
-        return 'Institution Registry';
-      case 'institution-detail':
-        return `Institution Registry / ${selectedInstitution?.name || ''}`;
-      case 'cases':
-        return 'Complaint Cases';
-      case 'case-detail':
-        return `Complaint Cases / ${selectedCase?.id || ''}`;
-      case 'overlaps':
-        return 'Overlap Detection';
-      case 'coordination':
-        return 'Bureau/Cell Coordination';
-      case 'transfers':
-        return 'Transfers & Escalations';
-      case 'alerts':
-        return 'Alerts & Notifications';
-      case 'reports':
-        return 'Reports & Analytics';
-      case 'audit':
-        return 'Audit Trail';
-      case 'settings':
-        return 'Settings & Model Monitoring';
-      default:
-        return 'Overview';
-    }
-  }, [activeScreen, selectedInstitution, selectedCase]);
-
   const handleSelectNav = (id: WorkspaceScreen) => {
     setActiveScreen(id);
     setMobileMenuOpen(false);
     setNotificationsOpen(false);
+    setBreadcrumbMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'auto' });
   };
+
+  const parentListNavigation = useMemo<{
+    label: string;
+    targetScreen: WorkspaceScreen;
+    onBack: () => void;
+  } | null>(() => {
+    if (activeScreen === 'institution-detail') {
+      return {
+        label: 'Institution Registry',
+        targetScreen: 'institutions',
+        onBack: () => handleSelectNav('institutions'),
+      };
+    }
+    if (activeScreen === 'case-detail') {
+      return {
+        label: 'Complaint Cases',
+        targetScreen: 'cases',
+        onBack: () => handleSelectNav('cases'),
+      };
+    }
+    return null;
+  }, [activeScreen]);
+
+  const breadcrumbSegments = useMemo<BreadcrumbSegment[]>(() => {
+    const rootScreen: WorkspaceScreen = roleProfile.allowedScreens.includes('overview')
+      ? 'overview'
+      : roleProfile.allowedScreens[0] || 'overview';
+
+    const rootSegment: BreadcrumbSegment = {
+      id: 'workspace-root',
+      label: 'AICTE CaseSync',
+      onSelect:
+        activeScreen !== rootScreen
+          ? () => handleSelectNav(rootScreen)
+          : undefined,
+    };
+
+    switch (activeScreen) {
+      case 'overview':
+        return [rootSegment, { id: 'overview', label: 'Overview Dashboard' }];
+      case 'institutions':
+        return [rootSegment, { id: 'institutions', label: 'Institution Registry' }];
+      case 'institution-detail':
+        return [
+          rootSegment,
+          {
+            id: 'institutions',
+            label: 'Institution Registry',
+            onSelect: () => handleSelectNav('institutions'),
+          },
+          {
+            id: 'institution-detail',
+            label: selectedInstitution?.name || 'Institution Profile',
+            badge: selectedInstitution?.aicte_permanent_id,
+          },
+        ];
+      case 'cases':
+        return [rootSegment, { id: 'cases', label: 'Complaint Cases' }];
+      case 'case-detail': {
+        const segments: BreadcrumbSegment[] = [
+          rootSegment,
+          {
+            id: 'cases',
+            label: 'Complaint Cases',
+            onSelect: () => handleSelectNav('cases'),
+          },
+        ];
+        if (
+          selectedCase?.institution_id &&
+          selectedCase?.institutionName &&
+          roleProfile.allowedScreens.includes('institutions')
+        ) {
+          segments.push({
+            id: 'case-institution',
+            label: selectedCase.institutionName,
+            hideOnMobile: true,
+            onSelect: () => openInstitutionProfile(selectedCase.institution_id),
+          });
+        }
+        segments.push({
+          id: 'case-detail',
+          label: selectedCase?.id || 'Case Details',
+          badge: selectedCase?.status,
+        });
+        return segments;
+      }
+      case 'overlaps':
+        return [rootSegment, { id: 'overlaps', label: 'Overlap Detection' }];
+      case 'coordination':
+        return [
+          rootSegment,
+          { id: 'coordination', label: 'Bureau/Cell Coordination' },
+        ];
+      case 'transfers':
+        return [
+          rootSegment,
+          { id: 'transfers', label: 'Transfers & Escalations' },
+        ];
+      case 'alerts':
+        return [rootSegment, { id: 'alerts', label: 'Alerts & Notifications' }];
+      case 'reports':
+        return [rootSegment, { id: 'reports', label: 'Reports & Analytics' }];
+      case 'audit':
+        return [rootSegment, { id: 'audit', label: 'Audit Trail' }];
+      case 'settings':
+        return [
+          rootSegment,
+          { id: 'settings', label: 'Settings & Model Monitoring' },
+        ];
+      default:
+        return [rootSegment, { id: 'overview', label: 'Overview' }];
+    }
+  }, [
+    activeScreen,
+    roleProfile.allowedScreens,
+    selectedInstitution,
+    selectedCase,
+    openInstitutionProfile,
+  ]);
 
   // Navigate to the relevant record from a notification item and mark it as read (without resolving the alert)
   const handleNotificationNavigate = (alert: AlertRecord) => {
@@ -707,28 +831,244 @@ export const WorkspaceApp: React.FC = () => {
           }`}
         >
           <div className="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-3">
-            {/* Left: Mobile Menu Button + Breadcrumb */}
-            <div className="flex items-center gap-3">
+            {/* Left: Mobile Menu Button + Interactive Breadcrumb Navigation */}
+            <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden neu-btn-secondary p-2 rounded-xl"
+                className="lg:hidden neu-btn-secondary p-2 rounded-xl shrink-0"
                 aria-label="Open navigation menu"
               >
                 <Menu className="w-4 h-4" />
               </button>
 
-              <div className="text-xs sm:text-sm font-semibold text-theme-secondary flex items-center gap-1.5">
-                <span
-                  onClick={() => handleSelectNav('overview')}
-                  className="hover:text-theme-blue cursor-pointer hidden sm:inline"
+              {parentListNavigation && (
+                <button
+                  type="button"
+                  onClick={parentListNavigation.onBack}
+                  className="neu-btn-secondary px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 text-theme-secondary hover:text-theme-blue cursor-pointer shrink-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3478F6]"
+                  title={`Return to ${parentListNavigation.label}`}
                 >
-                  AICTE CaseSync
-                </span>
-                <span className="hidden sm:inline text-theme-muted">/</span>
-                <span className="font-bold text-theme-primary truncate max-w-[220px] sm:max-w-none">
-                  {breadcrumbLabel}
-                </span>
-              </div>
+                  <ChevronLeft className="w-3.5 h-3.5 text-theme-blue" />
+                  <span className="hidden md:inline">
+                    Back to {parentListNavigation.label}
+                  </span>
+                </button>
+              )}
+
+              <nav
+                aria-label="Breadcrumb"
+                className="relative min-w-0"
+              >
+                <ol className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-semibold text-theme-secondary flex-wrap sm:flex-nowrap">
+                  {breadcrumbSegments.map((segment, index) => {
+                    const isLast = index === breadcrumbSegments.length - 1;
+                    const isRootSegment = segment.id === 'workspace-root';
+                    const visibilityClass = segment.hideOnMobile
+                      ? 'hidden sm:inline-flex'
+                      : 'inline-flex';
+
+                    if (isRootSegment) {
+                      return (
+                        <li
+                          key={segment.id}
+                          ref={breadcrumbMenuRef}
+                          className="relative inline-flex items-center gap-1 sm:gap-1.5 min-w-0"
+                        >
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setBreadcrumbMenuOpen((prev) => !prev)
+                            }
+                            aria-haspopup="menu"
+                            aria-expanded={breadcrumbMenuOpen}
+                            aria-label="AICTE CaseSync quick section switcher"
+                            title="Quick jump to any allowed workspace section"
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition-colors cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3478F6] ${
+                              breadcrumbMenuOpen
+                                ? 'bg-[#3478F6]/15 dark:bg-[#6EA1FF]/20 text-[#3478F6] dark:text-[#6EA1FF] border border-[#3478F6]/30 dark:border-[#6EA1FF]/30'
+                                : 'text-theme-secondary hover:text-[#3478F6] dark:hover:text-[#6EA1FF] hover:bg-[#3478F6]/10 dark:hover:bg-[#6EA1FF]/15 border border-transparent'
+                            }`}
+                          >
+                            <span className="truncate">{segment.label}</span>
+                            <ChevronDown
+                              aria-hidden="true"
+                              className={`w-3.5 h-3.5 shrink-0 transition-transform duration-150 ${
+                                breadcrumbMenuOpen
+                                  ? 'rotate-180 text-[#3478F6] dark:text-[#6EA1FF]'
+                                  : 'text-theme-muted'
+                              }`}
+                            />
+                          </button>
+
+                          <AnimatePresence>
+                            {breadcrumbMenuOpen && (
+                              <motion.div
+                                role="menu"
+                                aria-label="Allowed Workspace Sections"
+                                initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                                transition={{
+                                  duration: 0.16,
+                                  ease: [0.22, 1, 0.36, 1],
+                                }}
+                                className="absolute left-0 top-full mt-2 w-72 neu-card rounded-2xl border border-theme shadow-xl z-50 overflow-hidden p-1.5"
+                              >
+                                <div className="px-2.5 py-1.5 border-b border-theme mb-1 space-y-1.5">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-theme-muted">
+                                      Quick Jump
+                                    </span>
+                                    <span className="text-[10px] font-bold text-[#3478F6] dark:text-[#6EA1FF] truncate">
+                                      {roleProfile.shortLabel}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex items-center justify-between gap-2">
+                                    <label
+                                      htmlFor="quick-jump-sort-select"
+                                      className="inline-flex items-center gap-1 text-[10px] font-semibold text-theme-muted shrink-0"
+                                    >
+                                      <ArrowUpDown
+                                        aria-hidden="true"
+                                        className="w-3 h-3"
+                                      />
+                                      <span>Sort by</span>
+                                    </label>
+                                    <select
+                                      id="quick-jump-sort-select"
+                                      aria-label="Sort quick jump sections"
+                                      value={quickJumpSort}
+                                      onChange={(e) =>
+                                        setQuickJumpSort(
+                                          e.target.value as
+                                            | 'default'
+                                            | 'name'
+                                            | 'badge'
+                                        )
+                                      }
+                                      className="text-[11px] font-semibold bg-[var(--bg-inset)] text-theme-primary border border-theme rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#3478F6] cursor-pointer"
+                                    >
+                                      <option value="default">
+                                        Default Workflow
+                                      </option>
+                                      <option value="name">Name (A–Z)</option>
+                                      <option value="badge">
+                                        Badge Count (High–Low)
+                                      </option>
+                                    </select>
+                                  </div>
+                                </div>
+
+                                <div className="max-h-80 overflow-y-auto space-y-0.5">
+                                  {sortedQuickJumpItems.map((item) => {
+                                    const Icon = item.icon;
+                                    const isActive = isNavItemActive(item.id);
+
+                                    return (
+                                      <button
+                                        key={item.id}
+                                        type="button"
+                                        role="menuitem"
+                                        onClick={() => {
+                                          handleSelectNav(item.id);
+                                          setBreadcrumbMenuOpen(false);
+                                        }}
+                                        className={`w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer text-left ${
+                                          isActive
+                                            ? 'bg-[#3478F6]/12 dark:bg-[#6EA1FF]/16 text-[#3478F6] dark:text-[#6EA1FF]'
+                                            : 'text-theme-secondary hover:text-theme-primary hover:bg-[var(--bg-elevated)]/70'
+                                        }`}
+                                      >
+                                        <span className="flex items-center gap-2.5 min-w-0">
+                                          <Icon
+                                            className={`w-3.5 h-3.5 shrink-0 ${
+                                              isActive
+                                                ? 'text-[#3478F6] dark:text-[#6EA1FF]'
+                                                : 'text-theme-muted'
+                                            }`}
+                                          />
+                                          <span className="truncate">
+                                            {item.label}
+                                          </span>
+                                        </span>
+
+                                        <span className="flex items-center gap-1.5 shrink-0">
+                                          {item.badge !== undefined &&
+                                            item.badge > 0 && (
+                                              <span
+                                                className={`text-[10px] font-mono-tabular font-bold px-1.5 py-0.5 rounded-full ${
+                                                  isActive
+                                                    ? 'bg-[#3478F6] text-white'
+                                                    : 'bg-[var(--bg-inset)] text-theme-secondary'
+                                                }`}
+                                              >
+                                                {item.badge}
+                                              </span>
+                                            )}
+                                          {isActive && (
+                                            <Check
+                                              aria-hidden="true"
+                                              className="w-3.5 h-3.5 text-[#3478F6] dark:text-[#6EA1FF]"
+                                            />
+                                          )}
+                                        </span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </li>
+                      );
+                    }
+
+                    return (
+                      <li
+                        key={segment.id}
+                        className={`${visibilityClass} items-center gap-1 sm:gap-1.5 min-w-0`}
+                      >
+                        {index > 0 && (
+                          <ChevronRight
+                            aria-hidden="true"
+                            className="w-3.5 h-3.5 text-theme-muted shrink-0"
+                          />
+                        )}
+
+                        {segment.onSelect && !isLast ? (
+                          <button
+                            type="button"
+                            onClick={segment.onSelect}
+                            className="px-2 py-1 rounded-lg text-theme-secondary hover:text-[#3478F6] dark:hover:text-[#6EA1FF] hover:bg-[#3478F6]/10 dark:hover:bg-[#6EA1FF]/15 transition-colors cursor-pointer truncate max-w-[160px] sm:max-w-[220px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3478F6]"
+                            title={`Jump back to ${segment.label}`}
+                          >
+                            {segment.label}
+                          </button>
+                        ) : (
+                          <span
+                            aria-current={isLast ? 'page' : undefined}
+                            className={`inline-flex items-center gap-1.5 min-w-0 ${
+                              isLast
+                                ? 'font-bold text-theme-primary px-1.5 py-0.5'
+                                : 'text-theme-secondary px-1.5 py-0.5'
+                            }`}
+                          >
+                            <span className="truncate max-w-[180px] sm:max-w-[280px] md:max-w-[360px]">
+                              {segment.label}
+                            </span>
+                            {segment.badge && (
+                              <span className="hidden xl:inline-flex px-2 py-0.5 rounded-md text-[10px] font-mono-tabular font-bold bg-[#3478F6]/12 text-[#3478F6] dark:bg-[#6EA1FF]/16 dark:text-[#6EA1FF] shrink-0">
+                                {segment.badge}
+                              </span>
+                            )}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ol>
+              </nav>
             </div>
 
             {/* Center: Global Search across Institutions & Cases */}
