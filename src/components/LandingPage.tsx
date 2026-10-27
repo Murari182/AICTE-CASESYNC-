@@ -36,7 +36,7 @@ export const LandingPage: React.FC = () => {
     allCasesTotalCount,
   } = useCaseSync();
 
-  const isHeaderHidden = useScrollHideHeader(false);
+  const isHeaderHidden = useScrollHideHeader(true);
 
   const [activeNav, setActiveNav] = React.useState<
     'home' | 'problem-statement' | 'core-features' | 'how-it-works'

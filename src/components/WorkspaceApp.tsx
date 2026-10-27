@@ -28,7 +28,7 @@ import {
   X,
 } from 'lucide-react';
 import { useCaseSync } from '../context/CaseSyncContext';
-import { AlertRecord, WorkspaceScreen } from '../types/casesync';
+import { AlertRecord, UserRole, WorkspaceScreen } from '../types/casesync';
 import { AnalyticsView } from './views/AnalyticsView';
 import { CaseDetailsView } from './views/CaseDetailsView';
 import { CaseManagementView } from './views/CaseManagementView';
@@ -80,6 +80,7 @@ export const WorkspaceApp: React.FC = () => {
     openCaseDetail,
     markAlertRead,
     markAllAlertsRead,
+    setActiveRole,
   } = useCaseSync();
 
   const prefersReducedMotion = useReducedMotion();
@@ -90,9 +91,8 @@ export const WorkspaceApp: React.FC = () => {
   const [searchFocused, setSearchFocused] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
-  const isTopBarHidden = useScrollHideHeader(
-    notificationsOpen || searchFocused || mobileMenuOpen
-  );
+  // Keep top navigation bar permanently visible so search, alerts, role switcher, and breadcrumbs are always accessible
+  const isTopBarHidden = false;
 
   const notificationRef = useRef<HTMLDivElement | null>(null);
 
@@ -1049,18 +1049,29 @@ export const WorkspaceApp: React.FC = () => {
                 )}
               </button>
 
-              {/* Authenticated Account Badge + Switch Account Button */}
-              <div className="neu-inset px-3 py-1.5 rounded-xl flex items-center gap-2 text-xs">
-                <Shield className="w-3.5 h-3.5 text-theme-blue shrink-0" />
-                <span className="font-bold text-theme-primary hidden sm:inline">
-                  {roleProfile.shortLabel}
-                </span>
+              {/* Authenticated Account Badge + Quick Role Switcher + Switch Account Button */}
+              <div className="neu-inset px-2.5 py-1 rounded-xl flex items-center gap-1.5 text-xs">
+                <Shield className="w-3.5 h-3.5 text-theme-blue shrink-0 hidden sm:inline" />
+                <select
+                  value={activeRole}
+                  onChange={(e) => setActiveRole(e.target.value as UserRole)}
+                  className="bg-transparent font-bold text-theme-primary text-xs cursor-pointer focus:outline-none pr-1"
+                  title="Switch active role perspective to view permitted bureau items"
+                  aria-label="Switch active role"
+                >
+                  <option value="Administrator">Administrator (All Bureaus)</option>
+                  <option value="Regulation Bureau Officer (RB)">RB Officer</option>
+                  <option value="PGRC Officer">PGRC Officer</option>
+                  <option value="Regional Officer">Regional Officer (SRO)</option>
+                  <option value="Senior Management / Competent Authority">Senior Management</option>
+                  <option value="Submitter">Submitter</option>
+                </select>
                 <button
                   onClick={() => openLoginScreen(activeRole, activeScreen)}
-                  className="text-theme-blue font-bold hover:underline cursor-pointer"
+                  className="text-theme-blue text-[11px] font-bold hover:underline cursor-pointer border-l border-theme pl-2"
                   title="Authenticate with a different official account"
                 >
-                  Account
+                  Switch
                 </button>
               </div>
 

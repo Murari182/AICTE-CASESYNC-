@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { fileURLToPath } from 'url';
 import {
   INITIAL_ALERTS,
@@ -22,6 +23,19 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DB_FILE = path.join(__dirname, 'data-store.json');
+
+function getLocalIpAddresses(): string[] {
+  const interfaces = os.networkInterfaces();
+  const addresses: string[] = [];
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name] || []) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        addresses.push(iface.address);
+      }
+    }
+  }
+  return addresses;
+}
 
 function getInitialStore(): PersistedDatabaseState {
   try {
@@ -61,9 +75,22 @@ function saveStore(nextStore: PersistedDatabaseState) {
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
+  const HOST = process.env.HOST || '0.0.0.0';
 
   app.use(express.json({ limit: '5mb' }));
+
+  // CORS Middleware: Allow access from any network origin/IP
+  app.use((_req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    if (_req.method === 'OPTIONS') {
+      res.sendStatus(204);
+      return;
+    }
+    next();
+  });
 
   // Mount versioned REST API v1 from dedicated /backend module
   app.use(
@@ -103,7 +130,7 @@ async function startServer() {
 
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: { middlewareMode: true, host: '0.0.0.0' },
       appType: 'spa',
     });
     app.use(vite.middlewares);
@@ -115,8 +142,20 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`AICTE CaseSync server running on http://localhost:${PORT}`);
+  app.listen(PORT, HOST, () => {
+    const localIps = getLocalIpAddresses();
+    console.log('\n  ======================================================');
+    console.log('  🏛️  AICTE CaseSync Portal is Running & Accessible:');
+    console.log('  ======================================================');
+    console.log(`  ➜  Local:    http://localhost:${PORT}`);
+    if (localIps.length > 0) {
+      localIps.forEach((ip) => {
+        console.log(`  ➜  Network:  http://${ip}:${PORT}  (LAN / Wi-Fi IP address)`);
+      });
+    } else {
+      console.log(`  ➜  Network:  http://${HOST}:${PORT}`);
+    }
+    console.log('  ======================================================\n');
   });
 }
 
