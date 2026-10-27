@@ -137,6 +137,13 @@
   transform: translateY(0);
 }
 
+.neu-nav-pill {
+  background: linear-gradient(135deg, #3478F6 0%, #4338F5 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 12px rgba(52, 120, 246, 0.26);
+  will-change: transform;
+}
+
 .text-theme-primary {
   color: var(--text-primary);
 }

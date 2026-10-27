@@ -760,28 +760,32 @@ export const AlertsAndNotificationsView: React.FC = () => {
         </button>
       </div>
 
-      {/* Category Filter Tabs with Smooth Sliding Pill Indicator */}
-      <div className="neu-card rounded-2xl p-2 flex items-center gap-1.5 overflow-x-auto">
+      {/* Category Filter Tabs with Smooth Flicker-Free Sliding Pill Indicator */}
+      <div className="neu-card rounded-2xl p-2 flex items-center gap-1 overflow-x-auto">
         {categoryTabs.map((tab) => {
           const isActive = categoryTab === tab.id;
           return (
             <button
               key={tab.id}
+              type="button"
               onClick={() => setCategoryTab(tab.id)}
-              className={`relative px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1.5 transition-colors duration-200 cursor-pointer ${
+              className={`relative px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1.5 border border-transparent transition-colors duration-150 cursor-pointer select-none ${
                 isActive
                   ? 'text-white'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]/60'
               }`}
             >
               {isActive && (
                 <motion.span
                   layoutId="alerts-category-tab-pill"
+                  initial={false}
                   transition={{
-                    duration: 0.22,
-                    ease: [0.22, 1, 0.36, 1],
+                    type: 'spring',
+                    stiffness: 420,
+                    damping: 34,
+                    mass: 0.7,
                   }}
-                  className="absolute inset-0 rounded-xl neu-btn-primary shadow-xs"
+                  className="absolute inset-0 rounded-xl neu-nav-pill pointer-events-none"
                 />
               )}
               <span className="relative z-10 inline-flex items-center gap-1.5">

@@ -433,8 +433,8 @@ export const WorkspaceApp: React.FC = () => {
             </button>
           </div>
 
-          {/* Role-Filtered Navigation Items with Smooth Sliding Highlight & Left Accent Bar */}
-          <nav aria-label="Workspace Sections" className="space-y-1">
+          {/* Role-Filtered Navigation Items with Smooth Flicker-Free Sliding Highlight & Left Accent Bar */}
+          <nav aria-label="Workspace Sections" className="relative space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = isNavItemActive(item.id);
@@ -442,23 +442,27 @@ export const WorkspaceApp: React.FC = () => {
               return (
                 <button
                   key={item.id}
+                  type="button"
                   onClick={() => handleSelectNav(item.id)}
                   aria-current={isActive ? 'page' : undefined}
                   title={sidebarCollapsed ? item.label : undefined}
-                  className={`group relative overflow-hidden w-full flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl text-xs transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3478F6] ${
+                  className={`group relative w-full flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent transition-colors duration-150 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3478F6] ${
                     isActive
-                      ? 'text-[#3478F6] dark:text-[#6EA1FF] font-bold'
-                      : 'font-semibold text-theme-secondary border border-transparent hover:text-theme-primary hover:bg-[var(--bg-elevated)]'
+                      ? 'text-[#3478F6] dark:text-[#6EA1FF]'
+                      : 'text-theme-secondary hover:text-theme-primary hover:bg-[var(--bg-elevated)]/60'
                   }`}
                 >
                   {isActive && (
                     <motion.span
                       layoutId="desktop-sidebar-active-bg"
+                      initial={false}
                       transition={{
-                        duration: 0.22,
-                        ease: [0.22, 1, 0.36, 1],
+                        type: 'spring',
+                        stiffness: 420,
+                        damping: 34,
+                        mass: 0.7,
                       }}
-                      className="absolute inset-0 rounded-xl bg-[#3478F6]/12 dark:bg-[#6EA1FF]/16 border border-[#3478F6]/30 dark:border-[#6EA1FF]/30 shadow-xs"
+                      className="absolute inset-0 rounded-xl bg-[#3478F6]/12 dark:bg-[#6EA1FF]/16 border border-[#3478F6]/30 dark:border-[#6EA1FF]/30 shadow-xs pointer-events-none"
                     />
                   )}
 
@@ -466,23 +470,26 @@ export const WorkspaceApp: React.FC = () => {
                   {isActive ? (
                     <motion.span
                       layoutId="desktop-sidebar-active-bar"
+                      initial={false}
                       aria-hidden="true"
                       transition={{
-                        duration: 0.22,
-                        ease: [0.22, 1, 0.36, 1],
+                        type: 'spring',
+                        stiffness: 420,
+                        damping: 34,
+                        mass: 0.7,
                       }}
-                      className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-gradient-to-b from-[#3478F6] to-[#4338F5] z-10"
+                      className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-gradient-to-b from-[#3478F6] to-[#4338F5] z-10 pointer-events-none"
                     />
                   ) : (
                     <span
                       aria-hidden="true"
-                      className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-gradient-to-b from-[#3478F6] to-[#4338F5] opacity-0 group-hover:opacity-30 transition-opacity duration-200"
+                      className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-gradient-to-b from-[#3478F6] to-[#4338F5] opacity-0 group-hover:opacity-30 transition-opacity duration-150 pointer-events-none"
                     />
                   )}
 
                   <div className="relative z-10 flex items-center gap-2.5 min-w-0">
                     <Icon
-                      className={`w-4 h-4 shrink-0 transition-colors duration-200 ${
+                      className={`w-4 h-4 shrink-0 transition-colors duration-150 ${
                         isActive
                           ? 'text-[#3478F6] dark:text-[#6EA1FF]'
                           : 'text-theme-secondary group-hover:text-theme-primary'
@@ -497,7 +504,7 @@ export const WorkspaceApp: React.FC = () => {
                     item.badge !== undefined &&
                     item.badge > 0 && (
                       <span
-                        className={`relative z-10 px-2 py-0.5 rounded-full text-[10px] font-mono-tabular font-bold shrink-0 transition-colors duration-200 ${
+                        className={`relative z-10 px-2 py-0.5 rounded-full text-[10px] font-mono-tabular font-bold shrink-0 transition-colors duration-150 ${
                           isActive
                             ? 'bg-[#3478F6] text-white'
                             : item.id === 'alerts'
@@ -587,28 +594,50 @@ export const WorkspaceApp: React.FC = () => {
                 </button>
               </div>
 
-              <nav aria-label="Mobile Workspace Sections" className="space-y-1">
+              <nav aria-label="Mobile Workspace Sections" className="relative space-y-1">
                 {navItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = isNavItemActive(item.id);
                   return (
                     <button
                       key={item.id}
+                      type="button"
                       onClick={() => handleSelectNav(item.id)}
                       aria-current={isActive ? 'page' : undefined}
-                      className={`group relative overflow-hidden w-full flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl text-xs transition-colors duration-200 ${
+                      className={`group relative w-full flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent transition-colors duration-150 select-none ${
                         isActive
-                          ? 'bg-[#3478F6]/12 dark:bg-[#6EA1FF]/16 text-[#3478F6] dark:text-[#6EA1FF] font-bold border border-[#3478F6]/30 dark:border-[#6EA1FF]/30 shadow-xs'
-                          : 'font-semibold text-theme-secondary border border-transparent hover:text-theme-primary hover:bg-[var(--bg-elevated)]'
+                          ? 'text-[#3478F6] dark:text-[#6EA1FF]'
+                          : 'text-theme-secondary hover:text-theme-primary hover:bg-[var(--bg-elevated)]/60'
                       }`}
                     >
-                      <span
-                        aria-hidden="true"
-                        className={`absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-gradient-to-b from-[#3478F6] to-[#4338F5] transition-opacity duration-200 ${
-                          isActive ? 'opacity-100' : 'opacity-0'
-                        }`}
-                      />
-                      <div className="flex items-center gap-2.5 min-w-0">
+                      {isActive && (
+                        <motion.span
+                          layoutId="mobile-sidebar-active-bg"
+                          initial={false}
+                          transition={{
+                            type: 'spring',
+                            stiffness: 420,
+                            damping: 34,
+                            mass: 0.7,
+                          }}
+                          className="absolute inset-0 rounded-xl bg-[#3478F6]/12 dark:bg-[#6EA1FF]/16 border border-[#3478F6]/30 dark:border-[#6EA1FF]/30 shadow-xs pointer-events-none"
+                        />
+                      )}
+                      {isActive && (
+                        <motion.span
+                          layoutId="mobile-sidebar-active-bar"
+                          initial={false}
+                          aria-hidden="true"
+                          transition={{
+                            type: 'spring',
+                            stiffness: 420,
+                            damping: 34,
+                            mass: 0.7,
+                          }}
+                          className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-gradient-to-b from-[#3478F6] to-[#4338F5] z-10 pointer-events-none"
+                        />
+                      )}
+                      <div className="relative z-10 flex items-center gap-2.5 min-w-0">
                         <Icon
                           className={`w-4 h-4 shrink-0 ${
                             isActive
@@ -620,7 +649,7 @@ export const WorkspaceApp: React.FC = () => {
                       </div>
                       {item.badge !== undefined && item.badge > 0 && (
                         <span
-                          className={`text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                          className={`relative z-10 text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded-full shrink-0 ${
                             isActive
                               ? 'bg-[#3478F6] text-white'
                               : 'bg-[var(--bg-inset)] text-theme-primary'
@@ -671,7 +700,7 @@ export const WorkspaceApp: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Sticky Top Navigation Bar — Hides smoothly on scroll down, reveals on scroll up */}
         <header
-          className={`sticky top-0 z-20 neu-sidebar border-b border-theme px-4 sm:px-6 py-3 transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          className={`sticky top-0 z-20 neu-sidebar border-b border-theme px-4 sm:px-6 py-3 transition-[transform,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${
             isTopBarHidden
               ? '-translate-y-full opacity-0 pointer-events-none'
               : 'translate-y-0 opacity-100'
@@ -1105,50 +1134,43 @@ export const WorkspaceApp: React.FC = () => {
         </div>
 
         {/* Active Screen Container with Controlled Horizontal Slide + Fade Transition */}
-        <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 overflow-x-hidden">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={
-                activeScreen === 'institution-detail'
-                  ? `institution-detail-${selectedInstitution?.institution_id}-${activeRole}`
-                  : activeScreen === 'case-detail'
-                    ? `case-detail-${selectedCase?.id}-${activeRole}`
-                    : `${activeScreen}-${activeRole}`
-              }
-              initial={
-                prefersReducedMotion
-                  ? { opacity: 1, x: 0 }
-                  : { opacity: 0, x: 10 }
-              }
-              animate={{ opacity: 1, x: 0 }}
-              exit={
-                prefersReducedMotion
-                  ? { opacity: 1, x: 0 }
-                  : { opacity: 0, x: -4 }
-              }
-              transition={
-                prefersReducedMotion
-                  ? { duration: 0 }
-                  : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }
-              }
-              className="w-full min-w-0"
-            >
-              {activeScreen === 'overview' && <DashboardView />}
-              {activeScreen === 'institutions' && <InstitutionRegistryView />}
-              {activeScreen === 'institution-detail' && (
-                <InstitutionDetailView />
-              )}
-              {activeScreen === 'cases' && <CaseManagementView />}
-              {activeScreen === 'case-detail' && <CaseDetailsView />}
-              {activeScreen === 'overlaps' && <OverlapDetectionView />}
-              {activeScreen === 'coordination' && <BureauCoordinationView />}
-              {activeScreen === 'transfers' && <TransfersAndEscalationsView />}
-              {activeScreen === 'alerts' && <AlertsAndNotificationsView />}
-              {activeScreen === 'reports' && <AnalyticsView />}
-              {activeScreen === 'audit' && <AuditTrailView />}
-              {activeScreen === 'settings' && <SettingsView />}
-            </motion.div>
-          </AnimatePresence>
+        <main className="flex-1 w-full max-w-[1440px] min-h-[calc(100vh-8.5rem)] mx-auto px-4 sm:px-6 lg:px-8 py-6 overflow-x-hidden">
+          <motion.div
+            key={
+              activeScreen === 'institution-detail'
+                ? `institution-detail-${selectedInstitution?.institution_id}-${activeRole}`
+                : activeScreen === 'case-detail'
+                  ? `case-detail-${selectedCase?.id}-${activeRole}`
+                  : `${activeScreen}-${activeRole}`
+            }
+            initial={
+              prefersReducedMotion
+                ? { opacity: 1, x: 0 }
+                : { opacity: 0, x: 10 }
+            }
+            animate={{ opacity: 1, x: 0 }}
+            transition={
+              prefersReducedMotion
+                ? { duration: 0 }
+                : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }
+            }
+            className="w-full min-w-0 will-change-[transform,opacity]"
+          >
+            {activeScreen === 'overview' && <DashboardView />}
+            {activeScreen === 'institutions' && <InstitutionRegistryView />}
+            {activeScreen === 'institution-detail' && (
+              <InstitutionDetailView />
+            )}
+            {activeScreen === 'cases' && <CaseManagementView />}
+            {activeScreen === 'case-detail' && <CaseDetailsView />}
+            {activeScreen === 'overlaps' && <OverlapDetectionView />}
+            {activeScreen === 'coordination' && <BureauCoordinationView />}
+            {activeScreen === 'transfers' && <TransfersAndEscalationsView />}
+            {activeScreen === 'alerts' && <AlertsAndNotificationsView />}
+            {activeScreen === 'reports' && <AnalyticsView />}
+            {activeScreen === 'audit' && <AuditTrailView />}
+            {activeScreen === 'settings' && <SettingsView />}
+          </motion.div>
         </main>
       </div>
     </div>

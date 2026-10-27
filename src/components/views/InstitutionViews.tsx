@@ -495,8 +495,8 @@ export const InstitutionDetailView: React.FC = () => {
           </div>
         )}
 
-        {/* 5 Required Profile Tabs with Smooth Sliding Pill Indicator */}
-        <div className="flex flex-wrap items-center gap-2 pt-1">
+        {/* 5 Required Profile Tabs with Smooth Flicker-Free Sliding Pill Indicator */}
+        <div className="neu-inset p-1.5 rounded-[16px] flex flex-wrap items-center gap-1">
           {[
             { id: 'overview', label: '1. Overview' },
             {
@@ -517,6 +517,7 @@ export const InstitutionDetailView: React.FC = () => {
             return (
               <button
                 key={t.id}
+                type="button"
                 onClick={() =>
                   setInstitutionTab(
                     t.id as
@@ -527,20 +528,23 @@ export const InstitutionDetailView: React.FC = () => {
                       | 'reports'
                   )
                 }
-                className={`relative px-4 py-2 rounded-[12px] text-xs font-semibold transition-colors duration-200 cursor-pointer ${
+                className={`relative px-4 py-2 rounded-[12px] text-xs font-semibold border border-transparent transition-colors duration-150 cursor-pointer select-none ${
                   isActive
                     ? 'text-white'
-                    : 'neu-btn-secondary text-theme-secondary hover:text-theme-primary'
+                    : 'text-theme-secondary hover:text-theme-primary hover:bg-[var(--bg-elevated)]/60'
                 }`}
               >
                 {isActive && (
                   <motion.span
                     layoutId="institution-detail-tab-pill"
+                    initial={false}
                     transition={{
-                      duration: 0.22,
-                      ease: [0.22, 1, 0.36, 1],
+                      type: 'spring',
+                      stiffness: 420,
+                      damping: 34,
+                      mass: 0.7,
                     }}
-                    className="absolute inset-0 rounded-[12px] neu-btn-primary"
+                    className="absolute inset-0 rounded-[12px] neu-nav-pill pointer-events-none"
                   />
                 )}
                 <span className="relative z-10">{t.label}</span>

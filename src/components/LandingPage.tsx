@@ -42,43 +42,63 @@ export const LandingPage: React.FC = () => {
     'home' | 'problem-statement' | 'core-features' | 'how-it-works'
   >('home');
 
+  const isProgrammaticScrollRef = React.useRef(false);
+  const scrollResetTimerRef = React.useRef<number | null>(null);
+
   React.useEffect(() => {
     const handleScroll = () => {
+      if (isProgrammaticScrollRef.current) {
+        return;
+      }
       const y = window.scrollY;
-      if (y < 260) {
-        setActiveNav('home');
+      if (y < 240) {
+        setActiveNav((prev) => (prev === 'home' ? prev : 'home'));
         return;
       }
       const sections: (
         | 'problem-statement'
-        | 'core-features'
         | 'how-it-works'
+        | 'core-features'
       )[] = ['problem-statement', 'how-it-works', 'core-features'];
       for (const id of sections) {
         const el = document.getElementById(id);
         if (el) {
           const rect = el.getBoundingClientRect();
-          if (rect.top <= 180 && rect.bottom >= 140) {
-            setActiveNav(id);
+          if (rect.top <= 200 && rect.bottom >= 160) {
+            setActiveNav((prev) => (prev === id ? prev : id));
             break;
           }
         }
       }
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (scrollResetTimerRef.current !== null) {
+        window.clearTimeout(scrollResetTimerRef.current);
+      }
+    };
   }, []);
 
   const scrollToSection = (
     id: 'home' | 'problem-statement' | 'core-features' | 'how-it-works'
   ) => {
+    isProgrammaticScrollRef.current = true;
+    if (scrollResetTimerRef.current !== null) {
+      window.clearTimeout(scrollResetTimerRef.current);
+    }
     setActiveNav(id);
+
     if (id === 'home') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
+    } else {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
     }
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
+
+    scrollResetTimerRef.current = window.setTimeout(() => {
+      isProgrammaticScrollRef.current = false;
+    }, 700);
   };
 
   const navLinks: {
@@ -95,7 +115,7 @@ export const LandingPage: React.FC = () => {
     <div className="min-h-screen neu-shell transition-colors duration-200">
       {/* Sticky Public Navigation Bar with Hide-on-Scroll & Sliding Active Pill */}
       <header
-        className={`sticky top-0 z-40 bg-[var(--bg-app)]/95 backdrop-blur-md border-b border-theme transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        className={`sticky top-0 z-40 bg-[var(--bg-app)]/95 backdrop-blur-md border-b border-theme transition-[transform,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${
           isHeaderHidden
             ? '-translate-y-full opacity-0 pointer-events-none'
             : 'translate-y-0 opacity-100'
@@ -113,10 +133,10 @@ export const LandingPage: React.FC = () => {
             <span>AICTE CaseSync</span>
           </button>
 
-          {/* Public Navigation Links with Smooth Sliding Pill Indicator */}
+          {/* Public Navigation Links with Smooth Flicker-Free Sliding Pill Indicator */}
           <nav
             aria-label="Primary Navigation"
-            className="hidden lg:flex items-center gap-1.5 neu-inset p-1.5 rounded-[14px]"
+            className="hidden lg:flex items-center gap-1 neu-inset p-1.5 rounded-[14px]"
           >
             {navLinks.map((item) => {
               const isActive = activeNav === item.id;
@@ -126,7 +146,7 @@ export const LandingPage: React.FC = () => {
                   type="button"
                   onClick={() => scrollToSection(item.id)}
                   aria-current={isActive ? 'page' : undefined}
-                  className={`relative px-3.5 py-1.5 rounded-[10px] text-xs sm:text-sm font-semibold transition-colors duration-200 cursor-pointer flex items-center gap-1.5 ${
+                  className={`relative px-4 py-1.5 rounded-[10px] text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer select-none ${
                     isActive
                       ? 'text-white'
                       : 'text-theme-secondary hover:text-theme-primary'
@@ -135,18 +155,18 @@ export const LandingPage: React.FC = () => {
                   {isActive && (
                     <motion.span
                       layoutId="landing-nav-active-pill"
+                      initial={false}
                       transition={{
-                        duration: 0.22,
-                        ease: [0.22, 1, 0.36, 1],
+                        type: 'spring',
+                        stiffness: 420,
+                        damping: 34,
+                        mass: 0.7,
                       }}
-                      className="absolute inset-0 rounded-[10px] neu-btn-primary shadow-sm"
+                      className="absolute inset-0 rounded-[10px] neu-nav-pill pointer-events-none"
                     />
                   )}
-                  <span className="relative z-10 flex items-center gap-1.5">
-                    {isActive && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
-                    )}
-                    <span>{item.label}</span>
+                  <span className="relative z-10 whitespace-nowrap">
+                    {item.label}
                   </span>
                 </button>
               );
@@ -199,7 +219,7 @@ export const LandingPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile/Tablet Navigation Strip with Sliding Active Pill */}
+        {/* Mobile/Tablet Navigation Strip with Smooth Flicker-Free Sliding Pill */}
         <div className="lg:hidden border-t border-theme px-4 py-2 flex items-center gap-1.5 overflow-x-auto">
           {navLinks.map((item) => {
             const isActive = activeNav === item.id;
@@ -208,27 +228,27 @@ export const LandingPage: React.FC = () => {
                 key={item.id}
                 type="button"
                 onClick={() => scrollToSection(item.id)}
-                className={`relative px-3 py-1 rounded-[10px] text-xs font-semibold whitespace-nowrap transition-colors duration-200 cursor-pointer flex items-center gap-1.5 ${
+                className={`relative px-3.5 py-1.5 rounded-[10px] text-xs font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer select-none ${
                   isActive
                     ? 'text-white'
-                    : 'neu-btn-secondary text-theme-secondary'
+                    : 'text-theme-secondary hover:text-theme-primary'
                 }`}
               >
                 {isActive && (
                   <motion.span
                     layoutId="landing-mobile-nav-active-pill"
+                    initial={false}
                     transition={{
-                      duration: 0.22,
-                      ease: [0.22, 1, 0.36, 1],
+                      type: 'spring',
+                      stiffness: 420,
+                      damping: 34,
+                      mass: 0.7,
                     }}
-                    className="absolute inset-0 rounded-[10px] neu-btn-primary"
+                    className="absolute inset-0 rounded-[10px] neu-nav-pill pointer-events-none"
                   />
                 )}
-                <span className="relative z-10 flex items-center gap-1.5">
-                  {isActive && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
-                  )}
-                  <span>{item.label}</span>
+                <span className="relative z-10 whitespace-nowrap">
+                  {item.label}
                 </span>
               </button>
             );
