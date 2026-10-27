@@ -1,0 +1,815 @@
+# MASTER PROMPT — AICTE CaseSync Website Audit, Gap Analysis & Implementation
+
+## 1. ROLE
+
+Act as a senior full-stack engineer, software architect, Machine Learning engineer, database designer, and QA engineer.
+
+You are working on an existing project called **AICTE CaseSync** for Smart India Hackathon 2026.
+
+Your task is to inspect the entire existing codebase, compare its actual capabilities against the official SIH Problem Statement, identify missing or incomplete features, and implement the missing requirements without breaking existing functionality.
+
+**This is an audit-and-improve task, not a rebuild-from-scratch task.**
+
+Do not assume a feature exists because a button, page, chart, or demo card is visible. Verify whether it is connected to a working backend, persistent database, and actual application logic.
+
+Do not immediately start adding features. First inspect, document, and classify the gaps. Then implement them in a prioritized order.
+
+---
+
+# 2. OFFICIAL PROBLEM STATEMENT
+
+**Problem Statement ID:** 26264
+
+**Official title:** Integrated Dashboard for Monitoring and Tracking Institution-Related Complaint Cases Across AICTE Bureaus/Cells
+
+**Organization:** All India Council for Technical Education (AICTE)
+
+**Department:** Regulation Bureau
+
+**Category:** Software
+
+**Theme:** Smart Automation, according to the official PS details supplied by the team.
+
+## Problem being solved
+
+AICTE receives complaints and grievances related to technical education institutions from students, faculty members, stakeholders, and other concerned parties.
+
+These complaints may be handled by different Bureaus/Cells, including:
+
+- Regulation Bureau (RB)
+- Public Grievance Redressal Cell (PGRC)
+- Other concerned Bureaus/Cells
+- Regional Offices/Centres
+
+The same institution may have complaints or regulatory actions handled by multiple Bureaus/Cells.
+
+Without a centralized mechanism, officials may face:
+
+- Overlapping actions.
+- Duplication of effort.
+- Delays in complaint disposal.
+- Difficulty identifying the Bureau/Cell currently handling a case.
+- Incomplete visibility into an institution's complaint history.
+- Difficulty tracking transfers, escalations, and pending timelines.
+- Limited ability to generate consolidated reports.
+
+## Main objective
+
+Build a centralized institution complaint monitoring and tracking dashboard that establishes a single source of truth for institution-related cases, detects potential cross-bureau overlaps, maintains case history, and supports coordinated action by authorized AICTE officials.
+
+**The primary innovation is institution-level case consolidation and cross-bureau overlap detection.**
+
+ML-assisted complaint classification is a supporting feature.
+
+---
+
+# 3. FIRST TASK — INSPECT THE ENTIRE EXISTING PROJECT
+
+Before modifying any code, inspect the project structure and understand how the application currently works.
+
+Examine:
+
+- Frontend application and all routes.
+- Sidebar and navigation components.
+- Dashboard pages and widgets.
+- Institution profile pages.
+- Complaint/case management pages.
+- Search and filtering components.
+- Case detail pages.
+- Alerts and notification components.
+- Reports and analytics pages.
+- Forms and modal dialogs.
+- Backend application and API routes.
+- Database models, schemas, migrations, and seed data.
+- ML training scripts, saved models, preprocessing logic, and prediction endpoints.
+- Authentication and authorization.
+- Existing integrations between frontend, backend, database, and ML.
+- Environment variables and deployment configuration.
+- Tests, error handling, loading states, and empty states.
+
+Read the existing code before making changes. Reuse established components, conventions, styling, and architecture wherever practical.
+
+Do not delete files or replace existing modules merely because a new implementation seems easier.
+
+Do not expose secrets, credentials, private complaint data, or environment-variable values in logs or reports.
+
+## Important audit rule
+
+A feature must be classified as one of the following:
+
+1. **Working:** Verified through the relevant application logic and an actual successful test.
+2. **Partially working:** The interface or some logic exists, but the complete workflow is not functional.
+3. **UI-only/demo:** The feature displays sample or hardcoded information without a working underlying operation.
+4. **Missing:** The required capability does not exist.
+5. **Blocked/unverified:** Its status cannot be established because required data, credentials, services, or test conditions are unavailable.
+
+Do not classify a feature as working merely because its page renders or its button can be clicked.
+
+---
+
+# 4. SECOND TASK — CREATE A REQUIREMENTS GAP MATRIX
+
+Before implementation, produce a concise audit report with these columns:
+
+| Requirement | Current status | Evidence | Gap | Required action | Priority |
+|---|---|---|---|---|---|
+| Institution master profile | To be verified | Existing code/API/data | Describe actual gap | Specific change | P0/P1/P2 |
+| Cross-bureau overlap detection | To be verified | Matching logic and tests | Describe actual gap | Specific change | P0/P1/P2 |
+| Case status tracking | To be verified | Database and UI | Describe actual gap | Specific change | P0/P1/P2 |
+| Action history | To be verified | Schema and workflow | Describe actual gap | Specific change | P0/P1/P2 |
+| ML classification | To be verified | Model and prediction path | Describe actual gap | Specific change | P0/P1/P2 |
+| Search and filters | To be verified | API and UI | Describe actual gap | Specific change | P0/P1/P2 |
+| Alerts and timelines | To be verified | Rules and persisted data | Describe actual gap | Specific change | P0/P1/P2 |
+| Reports and analytics | To be verified | Queries and UI | Describe actual gap | Specific change | P0/P1/P2 |
+| Authentication and access control | To be verified | Auth middleware and permissions | Describe actual gap | Specific change | P0/P1/P2 |
+
+Use the same format to audit every requirement listed below.
+
+Do not fill the matrix with assumptions. Inspect the real project and cite the relevant file, API, database table, component, or test as evidence.
+
+After producing the audit, proceed to implementation. Do not stop after creating a report unless an essential dependency prevents progress.
+
+---
+
+# 5. REQUIRED FEATURE AUDIT — CENTRALIZED INSTITUTION PROFILE
+
+Official requirement: maintain a centralized institution profile.
+
+Inspect whether the application supports:
+
+- Unique institution ID / AICTE Permanent ID.
+- Institution name.
+- Address and region.
+- Other available institution details.
+- Consolidated complaint history.
+- Related case links.
+- Bureau/Cell-wise case visibility.
+- Institution-wise case status summary.
+
+## Required behaviour
+
+Each institution must have a canonical record.
+
+Multiple cases can reference the same institution through its validated AICTE Permanent ID.
+
+Opening an institution profile should show:
+
+1. Institution identity and available details.
+2. Total associated cases.
+3. Pending and under-process cases.
+4. Disposed, transferred, and escalated cases.
+5. Cases grouped by Bureau/Cell.
+6. Potential-overlap alerts.
+7. Chronological case history.
+8. Links to individual case details.
+
+Do not create separate institution records merely because two Bureaus/Cells have recorded the institution differently.
+
+When institution identifiers are missing or inconsistent, flag the record for verification. Supporting details such as institution name and address may help identify a potential match, but ambiguous matches must not be silently merged.
+
+---
+
+# 6. REQUIRED FEATURE AUDIT — COMPLAINT AND CASE TRACKING
+
+Inspect whether every case contains the required fields.
+
+## Required case fields
+
+- Unique Complaint/Case ID.
+- Institution ID / AICTE Permanent ID.
+- Date of receipt.
+- Complaint subject and description, where available.
+- Nature/category of complaint.
+- Current status.
+- Presently assigned Bureau/Cell.
+- Assigned officer/official, where available.
+- Last action taken.
+- Next action required.
+- Date of last action.
+- Expected disposal date.
+
+Also verify that the system can preserve transfer and escalation details.
+
+## Required workflow states
+
+Support the official statuses:
+
+- Pending.
+- Under Process.
+- Disposed.
+- Transferred.
+- Escalated.
+
+Use a controlled set of statuses and explicit transition rules.
+
+Do not allow a transfer to erase the previous Bureau/Cell, responsible officer, or case history.
+
+When a case is transferred, preserve the source assignment, destination assignment, timestamp, actor, and reason or remarks where applicable.
+
+When a case is escalated, preserve the escalation event and its reason.
+
+When a case is disposed, preserve the disposal action and relevant details.
+
+Do not silently overwrite case history when a status changes.
+
+---
+
+# 7. HIGHEST PRIORITY — CROSS-BUREAU OVERLAP DETECTION
+
+This is the most important part of the system.
+
+Inspect whether the current application genuinely identifies institution-related cases across Bureaus/Cells.
+
+Do not treat a basic text-similarity score as sufficient evidence of cross-bureau overlap.
+
+## Required detection workflow
+
+Step 1: Identify the canonical institution using its validated AICTE Permanent ID.
+
+Step 2: Retrieve associated cases across RB, PGRC, and other configured Bureaus/Cells.
+
+Step 3: Examine relevant information, including:
+
+- Bureau/Cell ownership.
+- Case status.
+- Receipt date.
+- Complaint subject and description, where available.
+- Existing related-case links.
+- Available case history.
+
+Step 4: Apply configured rules to identify potential overlaps that require coordination.
+
+Step 5: Generate a persistent alert associated with the relevant cases and institution.
+
+Step 6: Present the related cases to authorized officials for review.
+
+Step 7: Allow an authorized user to record a review outcome, remarks, and subsequent coordination actions.
+
+## Example
+
+Institution: Institution A
+
+PGRC case: Complaint under process.
+
+RB case: Related action initiated.
+
+Expected system behaviour:
+
+**POTENTIAL OVERLAPPING CASES — COORDINATION REQUIRED**
+
+The system should show both case IDs, their Bureau/Cell ownership, their statuses, relevant dates, and links to the case details.
+
+The alert should explain that both cases relate to the same institution and may require coordination.
+
+## Critical distinction
+
+Two complaints involving the same institution are not necessarily duplicates.
+
+The system must distinguish:
+
+- Same institution.
+- Potentially related complaints.
+- Confirmed duplicate complaints, where supported by an authorized review.
+
+Do not automatically merge, close, or suppress cases based on a matching institution ID or a similarity score.
+
+The system's role is to improve visibility and support coordinated action.
+
+## Prevent duplicate alerts
+
+If the same pair of cases continues to meet the overlap rule, do not create a new identical active alert on every dashboard refresh.
+
+Use a stable relationship or alert identity and update its state when necessary.
+
+Provide a mechanism for authorized users to review, acknowledge, dismiss with a reason, or mark an overlap as resolved, as appropriate to the implemented workflow.
+
+Preserve the alert and review history.
+
+## Tests required
+
+Test at least these scenarios:
+
+1. Same institution, different Bureaus/Cells, active cases.
+2. Same institution, different Bureaus/Cells, unrelated complaint subjects.
+3. Same institution, multiple cases in the same Bureau/Cell.
+4. Different institutions with similar complaint descriptions.
+5. Missing institution ID.
+6. Conflicting institution details.
+7. Transferred case with previous ownership history.
+8. Previously reviewed overlap.
+9. Repeated dashboard refreshes.
+10. Disposed cases that remain relevant to the institution's history.
+
+Verify that the system flags appropriate cases without falsely treating every related record as a confirmed duplicate.
+
+---
+
+# 8. REQUIRED FEATURE AUDIT — ML CLASSIFICATION
+
+Inspect the existing ML implementation before changing it.
+
+Determine whether the project has:
+
+- A real training dataset.
+- Correctly labelled complaint categories.
+- A preprocessing pipeline.
+- TF-IDF or another implemented feature-extraction method.
+- A trained classifier.
+- A saved model artifact.
+- A prediction function.
+- A backend API integration.
+- Model evaluation results.
+- Appropriate handling of uncertain predictions.
+
+## Proposed classification workflow
+
+Complaint subject and description → Text preprocessing → Feature extraction → Trained classifier → Suggested category → Officer verification.
+
+TF-IDF with a scikit-learn classifier is a candidate approach if compatible with the existing project.
+
+Do not replace a working model without evidence that the change is necessary.
+
+Do not fabricate training data, accuracy, precision, recall, F1-score, or model performance.
+
+If the model has not been trained or validated, clearly report that limitation.
+
+## Required integration
+
+When a complaint is classified:
+
+1. Validate the input.
+2. Run the actual model pipeline.
+3. Return the predicted category and any supported confidence information.
+4. Display the result in the case interface.
+5. Allow authorized users to review or correct the category.
+6. Preserve the final recorded category and relevant audit information.
+
+If prediction fails, return a clear error or review-required state rather than a fake prediction.
+
+The classification output must not independently determine whether two cases overlap.
+
+---
+
+# 9. REQUIRED FEATURE AUDIT — REAL-TIME MONITORING DASHBOARD
+
+Inspect every existing dashboard KPI and chart.
+
+Verify whether each metric is calculated from actual case records or is hardcoded.
+
+## Required dashboard metrics
+
+- Total complaints/cases received.
+- Pending cases.
+- Cases under process.
+- Disposed cases.
+- Transferred cases.
+- Cases escalated.
+- Cases pending beyond prescribed timelines.
+- Institution-wise case status.
+- Bureau/Cell-wise workload.
+
+## Required behaviour
+
+All dashboard counts must come from the backend and persistent case data.
+
+When a case changes status, the relevant metrics should update consistently.
+
+Do not display contradictory totals across the dashboard and case-management pages.
+
+Use clearly defined counting rules, including whether transferred or escalated cases remain part of the overall case count.
+
+Make the reporting period and relevant filters clear when they affect the displayed metrics.
+
+If the application uses a manual refresh, make that behaviour explicit. Implement automatic refresh or push-based updates only if appropriate to the existing architecture.
+
+Do not claim live real-time updates if the application only refreshes after navigation or manual action.
+
+---
+
+# 10. REQUIRED FEATURE AUDIT — ACTION HISTORY AND AUDIT TRAIL
+
+Inspect whether the application preserves a chronological record of actions.
+
+The history should support, where applicable:
+
+- Case creation.
+- Status changes.
+- Bureau/Cell assignment changes.
+- Officer assignment changes.
+- Transfers.
+- Escalations.
+- Remarks and follow-up actions.
+- Overlap alerts and review outcomes.
+- Supporting document references.
+- Timestamps and responsible users.
+
+The system should distinguish the current case state from historical events.
+
+Use consistent timestamps and preserve the actor and relevant before/after values for important changes.
+
+Do not allow normal case-editing operations to erase historical records.
+
+Provide an action-history section on the case detail page.
+
+If role-based permissions are implemented, restrict sensitive actions to the appropriate authorized roles.
+
+---
+
+# 11. REQUIRED FEATURE AUDIT — SEARCH AND FILTERS
+
+Verify whether the application supports searching and filtering by all the official PS dimensions.
+
+Required search fields:
+
+- Institution Name.
+- AICTE Permanent ID.
+- Complaint/Case ID.
+- Bureau/Cell.
+- Region.
+- Complaint category.
+- Status.
+- Date range.
+
+## Required behaviour
+
+- Search should return matching persistent records.
+- Multiple applicable filters should work together.
+- Clearing filters should restore the expected result set.
+- Search should handle reasonable variations in text.
+- Case IDs and institution identifiers should be searchable exactly.
+- Results should support opening the relevant institution or case detail.
+- Empty results should display a helpful empty state.
+- Large result sets should use appropriate pagination or another efficient strategy.
+
+Do not create a filter that only changes the visible label while leaving the data unchanged.
+
+Where appropriate, use backend filtering instead of downloading every record into the browser.
+
+---
+
+# 12. REQUIRED FEATURE AUDIT — ALERTS, TIMELINES AND ESCALATION
+
+Inspect whether alerts are generated from actual rules and persisted data.
+
+Required alert categories:
+
+- Potential overlapping cases.
+- Pending-case reminders.
+- Escalation alerts.
+- Cases approaching prescribed timelines.
+- Cases beyond prescribed timelines.
+
+## Timeline logic
+
+Use the expected disposal date and applicable configured timelines to calculate approaching or overdue cases.
+
+Do not invent official SLA durations.
+
+If prescribed timelines are not provided, make the configuration explicit and avoid presenting an assumed duration as an official AICTE rule.
+
+Display relevant information such as:
+
+- Case ID.
+- Institution.
+- Assigned Bureau/Cell.
+- Current status.
+- Expected disposal date.
+- Alert reason.
+- Review or follow-up action.
+
+Avoid generating repeated duplicate notifications for the same unresolved condition.
+
+Support alert acknowledgement and resolution where appropriate, while preserving alert history.
+
+---
+
+# 13. REQUIRED FEATURE AUDIT — REPORTS AND ANALYTICS
+
+Verify whether reports can be generated from actual case records.
+
+Required reports:
+
+1. Bureau/Cell-wise case reports.
+2. Region-wise case reports.
+3. Institution-wise complaint history.
+4. Pending-case ageing analysis.
+5. Disposal rate.
+6. Potentially overlapping or duplicate-case reports.
+7. Monthly performance reports.
+8. Quarterly performance reports.
+
+## Required behaviour
+
+- Reports must use real database queries.
+- Filters must affect the underlying report data.
+- Status counts must match the dashboard.
+- Ageing calculations must use defined date rules.
+- Disposal rates must use a clearly documented numerator and denominator.
+- Date ranges and report periods must be explicit.
+- Export options should be implemented if required by the current application design and feasible within the project scope.
+- Reports must not expose records to unauthorized users.
+
+Do not add meaningless charts merely to make the dashboard look more sophisticated.
+
+Every chart should answer a specific administrative question.
+
+---
+
+# 14. SECURITY, AUTHORIZATION AND DATA QUALITY
+
+Inspect whether the application includes:
+
+- Authentication.
+- Role-based access control.
+- Input validation.
+- Backend authorization checks.
+- Secure error handling.
+- Protection against unauthorized case modification.
+- Traceable status changes.
+- Safe handling of uploaded documents.
+- Secure configuration and secret management.
+
+The target users include authorized AICTE officials, Bureaus/Cells, Regional Offices/Centres, and senior management.
+
+Use appropriate roles and permissions based on the existing application requirements. Do not assume every user should have unrestricted access to all complaint records.
+
+Enforce authorization on the backend, not only by hiding frontend buttons.
+
+Validate institution identifiers and case references.
+
+Use database constraints and transactions where appropriate to protect record integrity.
+
+Do not introduce production credentials, real confidential complaint records, or unverified government integrations.
+
+If real AICTE systems are unavailable, use clearly labelled synthetic or anonymized sample data for the demonstration.
+
+---
+
+# 15. FRONTEND AND NAVIGATION AUDIT
+
+Inspect the existing navigation and every major page.
+
+Verify whether the following sections exist and function:
+
+- Overview Dashboard.
+- Institution Profiles.
+- Case Management.
+- Case Detail and Action History.
+- Cross-Bureau Overlap Alerts.
+- Pending and Timeline Monitoring.
+- Reports and Analytics.
+- ML Classification interface, where applicable.
+- User and Role Management, where applicable.
+
+Do not create duplicate pages if equivalent pages already exist.
+
+Maintain the existing visual theme, spacing, typography, sidebar structure, and responsive design.
+
+Preserve existing navigation behaviour and animations.
+
+Ensure that each visible navigation item opens the correct page and that active navigation states are clear.
+
+Remove demo-only functionality only after verifying that it is not required for legitimate testing. Do not silently remove useful sample-data workflows.
+
+All major forms should have:
+
+- Input validation.
+- Loading states.
+- Success and error feedback.
+- Clear required-field indicators.
+- Useful empty states.
+- Appropriate cancellation behaviour.
+
+Buttons must perform their stated actions.
+
+Do not leave nonfunctional placeholder buttons in the final demonstration.
+
+---
+
+# 16. BACKEND AND DATABASE INTEGRATION
+
+Inspect whether the backend actually supports all required frontend workflows.
+
+Verify that:
+
+- Institution records can be retrieved and maintained.
+- Cases can be created and updated.
+- Case status transitions are validated.
+- Bureau/Cell assignments are stored.
+- Action history is persisted.
+- Related cases can be retrieved by institution.
+- Overlap alerts are generated and stored.
+- Search and filters use actual backend logic.
+- Dashboard metrics are calculated from database records.
+- Reports use consistent data.
+- ML predictions are generated by the real model pipeline.
+
+Use the existing backend architecture where practical.
+
+If the project uses FastAPI and PostgreSQL, preserve that architecture unless the audit identifies a concrete reason to change it.
+
+Create database migrations when schema changes are required.
+
+Do not replace persistent database storage with local browser state or hardcoded arrays.
+
+Ensure that API errors are handled properly and that sensitive error details are not exposed to end users.
+
+---
+
+# 17. IMPLEMENTATION PRIORITY
+
+After the audit, implement missing requirements in this order.
+
+## P0 — Core PS functionality
+
+These are essential to the central problem:
+
+1. Centralized institution records.
+2. Case records linked to canonical institution IDs.
+3. Cross-bureau case lookup.
+4. Potential-overlap detection and persisted alerts.
+5. Case status and Bureau/Cell ownership tracking.
+6. Action history and transfer tracking.
+7. A dashboard that displays actual consolidated case data.
+
+## P1 — Complete operational workflow
+
+8. Search and combined filters.
+9. Pending-case and timeline alerts.
+10. Institution-wise case history.
+11. Bureau/Cell-wise workload reporting.
+12. Required case statuses and workflow transitions.
+13. Authentication and appropriate access controls.
+14. ML-assisted complaint classification, if not already working.
+
+## P2 — Reporting and refinement
+
+15. Region-wise reports.
+16. Ageing analysis and disposal rates.
+17. Monthly and quarterly reports.
+18. Additional export options, if required.
+19. UI polish, accessibility, and performance improvements.
+20. Additional tests and usability refinements.
+
+Adjust these priorities only when the audit reveals a genuine dependency or an already-complete feature.
+
+Do not spend time polishing animations while core case records and overlap detection are nonfunctional.
+
+---
+
+# 18. IMPLEMENTATION RULES
+
+Follow these rules throughout the task:
+
+1. Inspect before editing.
+2. Reuse working components and APIs.
+3. Implement only missing or defective functionality.
+4. Do not duplicate existing features.
+5. Do not break existing routes or navigation.
+6. Do not replace the project architecture without justification.
+7. Do not hardcode dashboard metrics.
+8. Do not fake ML predictions.
+9. Do not create fake overlap alerts disconnected from case records.
+10. Do not automatically merge cases.
+11. Do not invent official timelines or SLA requirements.
+12. Do not fabricate performance results.
+13. Do not expose secrets or sensitive complaint data.
+14. Preserve the existing visual identity.
+15. Keep code modular, maintainable, and testable.
+16. Use database migrations for schema changes.
+17. Preserve historical case actions.
+18. Do not claim success until the relevant tests have passed.
+19. Document any blocked feature and its dependency.
+20. Clearly distinguish completed functionality from proposed functionality.
+
+If a required feature depends on unavailable data, credentials, or external AICTE systems, implement the supported local functionality and document the limitation instead of pretending the integration exists.
+
+---
+
+# 19. TESTING AND ACCEPTANCE CRITERIA
+
+After implementation, test the actual end-to-end workflows.
+
+### Test A — Institution and case linkage
+
+Create or use a clearly labelled test institution and associate cases with it.
+
+Verify that the institution profile shows all associated cases.
+
+### Test B — Cross-bureau overlap
+
+Associate one active PGRC case and one relevant RB case with the same institution.
+
+Verify that the system identifies the shared institution and produces a persistent potential-overlap alert according to the configured rules.
+
+### Test C — False-positive handling
+
+Associate unrelated complaints with the same institution.
+
+Verify that the system does not automatically declare them duplicates and provides sufficient information for authorized review.
+
+### Test D — Case transfer
+
+Transfer a case between Bureaus/Cells.
+
+Verify that the current assignment changes and the previous assignment remains visible in the action history.
+
+### Test E — Case status
+
+Change a case status and verify that the dashboard, case detail, institution profile, and relevant reports remain consistent.
+
+### Test F — Search and filtering
+
+Search by case ID, institution ID, Bureau/Cell, region, category, status, and date range.
+
+Verify that combined filters work correctly.
+
+### Test G — Timeline alerts
+
+Create test cases with approaching and overdue expected disposal dates.
+
+Verify the alert logic against the configured rules.
+
+### Test H — ML classification
+
+Submit a complaint through the actual prediction pipeline.
+
+Verify that the returned category is produced by the real model and that prediction errors are handled correctly.
+
+### Test I — Action history
+
+Change case ownership, status, and relevant details.
+
+Verify that timestamps and historical actions remain intact.
+
+### Test J — Security
+
+Verify that unauthorized users cannot perform restricted backend actions simply by bypassing the frontend.
+
+### Test K — Dashboard consistency
+
+Compare dashboard counts with the corresponding case records and report queries.
+
+### Test L — Regression
+
+Verify that existing routes, navigation, forms, responsive layouts, and previously working functionality continue to work.
+
+Use automated tests where available and document any test that could not be performed.
+
+---
+
+# 20. FINAL DELIVERABLES
+
+At the end of the task, provide:
+
+**A. Audit report**
+
+A requirements matrix showing which features were working, partially working, UI-only/demo, missing, or blocked.
+
+**B. Implemented changes**
+
+A list of modified files and the purpose of each change.
+
+**C. Backend and database changes**
+
+New or modified APIs, models, migrations, and configuration requirements.
+
+**D. ML changes**
+
+Existing model findings, integration changes, and actual evaluation results if available.
+
+**E. Testing report**
+
+Tests executed, pass/fail results, and known limitations.
+
+**F. Remaining gaps**
+
+Any official PS requirement that is still incomplete, with the reason and the next action required.
+
+**G. Demonstration workflow**
+
+A step-by-step sequence showing how to demonstrate institution identification, cross-bureau overlap detection, case tracking, action history, and dashboard reporting.
+
+**H. Final implementation status**
+
+Clearly state which features are fully implemented, which are partially implemented, and which still require external data or integration.
+
+Do not claim the application is fully complete if any mandatory P0 requirement remains unimplemented or unverified.
+
+---
+
+# FINAL INSTRUCTION
+
+Begin by inspecting the actual existing codebase and producing the requirements gap matrix.
+
+Then implement the missing features in the stated priority order, preserving existing functionality and testing each change.
+
+The final application must directly address official SIH Problem Statement 26264.
+
+The defining workflow is:
+
+**Validated Institution ID → Consolidated Case Records → Cross-Bureau Case Lookup → Potential-Overlap Alert → Authorized Review → Coordinated Action**
+
+ML classification, timeline monitoring, case history, search, and reporting should support this workflow.
+
+The objective is not to create the largest possible dashboard. It is to deliver a reliable, functional, integrated institution complaint monitoring system that demonstrably solves the problem AICTE has specified.

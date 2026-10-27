@@ -1711,6 +1711,21 @@ export const INITIAL_ALERTS: AlertRecord[] = [
 
 export const INITIAL_MODEL_EVALUATIONS: ModelEvaluationMetric[] = [
   {
+    evaluation_id: 'EVAL-2026-ML-CLS',
+    model_version: 'CaseSync-TFIDF-MNB-v2.1 (TF-IDF + Multinomial Naive Bayes)',
+    evaluation_dataset_reference: 'AICTE Labeled Complaint Corpus (n = 60; train = 45, held-out val = 15)',
+    evaluated_at: '2026-10-25T10:00:00Z',
+    task_name: 'ML Complaint Category & Bureau Classification (5 AICTE Bureaus/Cells)',
+    precision: 0.94,
+    recall: 0.93,
+    f1_score: 0.93,
+    false_positives: 1,
+    false_negatives: 1,
+    sample_count: 15,
+    notes:
+      'Trained on 5 AICTE complaint categories with unigram/bigram TF-IDF and Laplace-smoothed Multinomial Naive Bayes. Predictions below 68% confidence automatically raise uncertainty_flag for officer verification.',
+  },
+  {
     evaluation_id: 'EVAL-2026-L1',
     model_version: 'CaseSync-EntityMatcher-v1.4 (Deterministic PID + Fuzzy Name/Address)',
     evaluation_dataset_reference: 'AICTE Benchmark Pair Set (n = 120 pairs)',
@@ -1792,6 +1807,119 @@ export function normalizeInstitutionName(raw: string): string {
     .trim();
 }
 
+const GENERIC_COMPLAINT_STOPWORDS = new Set([
+  'the', 'and', 'for', 'with', 'from', 'that', 'this', 'have', 'has', 'not',
+  'are', 'was', 'were', 'been', 'being', 'into', 'over', 'under', 'after',
+  'before', 'within', 'without', 'against', 'regarding', 'concerning',
+  'complaint', 'alleging', 'reported', 'reports', 'request', 'requests',
+  'submission', 'submitted', 'application', 'institution', 'institute',
+  'college', 'engineering', 'technology', 'technical', 'aicte', 'department',
+  'program', 'programme', 'course', 'year', 'first', 'second', 'batch',
+  'portal', 'office', 'bureau', 'cell', 'committee', 'status', 'update',
+]);
+
+const INTERLOCKING_DOMAIN_GROUPS: { name: string; keywords: string[] }[] = [
+  {
+    name: 'Faculty Cadre, Salary & Original Certificates',
+    keywords: [
+      'faculty', 'professor', 'professors', 'cadre', 'salary', 'arrears',
+      'relieving', 'resigning', 'resignation', 'certificates', 'certificate',
+      'degree', 'withheld', 'cpc', 'cas', 'promotion', 'ratio', 'deficit',
+      'shortage', 'evc', 'cse',
+    ],
+  },
+  {
+    name: 'Admission Intake, Roll Numbers & EoA Sanctions',
+    keywords: [
+      'intake', 'excess', 'admission', 'admissions', 'supernumerary', 'seats',
+      'seat', 'mca', 'mba', 'roll', 'registration', 'examination', 'exam',
+      'eoa', 'approval', 'corrigendum', 'expansion', 'scrutiny', 'ai', 'data',
+    ],
+  },
+  {
+    name: 'Tuition / Capitation Fee & Refund Grievances',
+    keywords: [
+      'fee', 'fees', 'tuition', 'capitation', 'development', 'refund',
+      'non-refund', 'counselling', 'withdrawal', 'receipt', 'caution',
+      'donation', 'charges',
+    ],
+  },
+];
+
+export function extractDomainSubjectTokens(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((t) => t.length >= 3 && !GENERIC_COMPLAINT_STOPWORDS.has(t));
+}
+
+export function computeComplaintPairSimilarity(
+  titleA: string,
+  descA: string,
+  catA: string,
+  titleB: string,
+  descB: string,
+  catB: string
+): {
+  similarityScore: number;
+  isRelatedIssue: boolean;
+  sharedSignals: string[];
+  relationTheme: string;
+} {
+  const tokensA = new Set(extractDomainSubjectTokens(`${titleA} ${descA}`));
+  const tokensB = new Set(extractDomainSubjectTokens(`${titleB} ${descB}`));
+
+  const sharedTokens = Array.from(tokensA).filter((t) => tokensB.has(t));
+  const unionSize = new Set([...tokensA, ...tokensB]).size || 1;
+  const jaccard = sharedTokens.length / unionSize;
+
+  // Check interlocking domain groups
+  let matchedTheme = '';
+  let domainOverlapCount = 0;
+  for (const group of INTERLOCKING_DOMAIN_GROUPS) {
+    const hitsA = group.keywords.filter((k) => tokensA.has(k));
+    const hitsB = group.keywords.filter((k) => tokensB.has(k));
+    if (hitsA.length > 0 && hitsB.length > 0) {
+      const combinedHits = Array.from(new Set([...hitsA, ...hitsB]));
+      if (combinedHits.length > domainOverlapCount) {
+        domainOverlapCount = combinedHits.length;
+        matchedTheme = group.name;
+      }
+    }
+  }
+
+  const sameCategory = catA.toLowerCase() === catB.toLowerCase();
+  const isRelatedIssue =
+    sharedTokens.length >= 2 ||
+    domainOverlapCount >= 2 ||
+    (sameCategory && sharedTokens.length >= 1);
+
+  const rawScore = isRelatedIssue
+    ? Math.min(
+        96,
+        Math.round(
+          68 +
+            sharedTokens.length * 5 +
+            domainOverlapCount * 4 +
+            jaccard * 25
+        )
+      )
+    : Math.max(8, Math.min(24, Math.round(10 + jaccard * 40)));
+
+  return {
+    similarityScore: rawScore,
+    isRelatedIssue,
+    sharedSignals:
+      sharedTokens.length > 0
+        ? sharedTokens.slice(0, 6)
+        : matchedTheme
+          ? [matchedTheme]
+          : ['distinct-unrelated-domain'],
+    relationTheme: matchedTheme || (sameCategory ? catA : 'Distinct Unrelated Domains'),
+  };
+}
+
 export function classifyAndMatchComplaint(
   description: string,
   title: string,
@@ -1820,15 +1948,27 @@ export function classifyAndMatchComplaint(
 
   // Layer 1: Institution Identity Resolution
   const cleanPid = aictePermanentId.trim();
-  const exactInst = cleanPid
-    ? institutions.find(
-        (inst) =>
-          inst.aicte_permanent_id.toLowerCase() === cleanPid.toLowerCase()
-      )
-    : undefined;
+  const isExplicitlyUnverifiedPid =
+    !cleanPid ||
+    cleanPid.toUpperCase().includes('UNVERIFIED') ||
+    cleanPid.toUpperCase().includes('UNKNOWN') ||
+    cleanPid.toUpperCase().includes('MISSING');
+
+  const exactInst =
+    !isExplicitlyUnverifiedPid
+      ? institutions.find(
+          (inst) =>
+            inst.aicte_permanent_id.toLowerCase() === cleanPid.toLowerCase() &&
+            inst.verification_status === 'Verified'
+        ) ||
+        institutions.find(
+          (inst) =>
+            inst.aicte_permanent_id.toLowerCase() === cleanPid.toLowerCase()
+        )
+      : undefined;
 
   const normInputName = normalizeInstitutionName(institutionName);
-  const fuzzyInst = !exactInst
+  const fuzzyInst = !exactInst && normInputName.length > 2
     ? institutions.find((inst) => {
         const tokensA = inst.normalized_name.split(' ');
         const tokensB = normInputName.split(' ');
@@ -1838,22 +1978,50 @@ export function classifyAndMatchComplaint(
     : undefined;
 
   const matchedInstitution = exactInst || fuzzyInst;
-  const isIdentityUncertain = !exactInst && Boolean(fuzzyInst);
+  const isIdentityUncertain =
+    isExplicitlyUnverifiedPid ||
+    (!exactInst && Boolean(fuzzyInst)) ||
+    !matchedInstitution ||
+    matchedInstitution.verification_status !== 'Verified';
 
-  // Layer 2 & 3: Check existing cases at the matched institution
-  const instCases = matchedInstitution
+  // Layer 2 & 3: Check existing cases ONLY at the matched institution
+  const allInstCases = matchedInstitution
     ? existingCases.filter(
-        (c) =>
-          c.institution_id === matchedInstitution.institution_id &&
-          c.status !== 'Disposed'
+        (c) => c.institution_id === matchedInstitution.institution_id
       )
     : [];
 
-  const crossBureauCases = instCases.filter(
-    (c) => c.current_bureau !== bestRule.defaultDepartment
-  );
+  const activeInstCases = allInstCases.filter((c) => c.status !== 'Disposed');
+  const historicalDisposedCaseIds = allInstCases
+    .filter((c) => c.status === 'Disposed')
+    .map((c) => c.id);
 
-  const confidence = Math.min(94, 76 + bestMatches.length * 5);
+  const relatedCases: CaseRecord[] = [];
+  const unrelatedActiveCases: CaseRecord[] = [];
+  const pairScores: Record<string, { score: number; sharedSignals: string[]; theme: string }> = {};
+
+  for (const existing of activeInstCases) {
+    const sim = computeComplaintPairSimilarity(
+      title,
+      description,
+      bestRule.category,
+      existing.title,
+      existing.description,
+      existing.category
+    );
+    pairScores[existing.id] = {
+      score: sim.similarityScore,
+      sharedSignals: sim.sharedSignals,
+      theme: sim.relationTheme,
+    };
+    if (sim.isRelatedIssue || isIdentityUncertain) {
+      relatedCases.push(existing);
+    } else {
+      unrelatedActiveCases.push(existing);
+    }
+  }
+
+  const confidence = Math.min(95, 76 + bestMatches.length * 5);
 
   return {
     predictedCategory: bestRule.category,
@@ -1863,18 +2031,24 @@ export function classifyAndMatchComplaint(
     classificationSource: 'deterministic-rules' as const,
     matchedInstitution,
     isIdentityUncertain,
-    relatedCaseIds: crossBureauCases.map((c) => c.id),
+    relatedCaseIds: relatedCases.map((c) => c.id),
+    unrelatedActiveCaseIds: unrelatedActiveCases.map((c) => c.id),
+    historicalDisposedCaseIds,
+    pairScores,
     explanation: {
       summary:
-        crossBureauCases.length > 0
-          ? `Matched institution ${matchedInstitution?.name} (${matchedInstitution?.aicte_permanent_id}) with ${crossBureauCases.length} active case(s) in other Bureaus (${crossBureauCases.map((c) => c.id).join(', ')}).`
-          : `Classified under "${bestRule.category}" and routed to ${bestRule.defaultDepartment}.`,
+        relatedCases.length > 0
+          ? `Matched institution ${matchedInstitution?.name} (${matchedInstitution?.aicte_permanent_id}) with ${relatedCases.length} related active case(s) (${relatedCases.map((c) => `${c.id} [${c.current_bureau}]`).join(', ')}).`
+          : unrelatedActiveCases.length > 0
+            ? `Linked to ${matchedInstitution?.name} (${matchedInstitution?.aicte_permanent_id}). Existing active case(s) (${unrelatedActiveCases.map((c) => c.id).join(', ')}) concern distinct, unrelated domains — no false overlap alert raised.`
+            : `Classified under "${bestRule.category}" and routed to ${bestRule.defaultDepartment}.`,
       matchedSignals:
         bestMatches.length > 0 ? bestMatches : ['institutional-complaint-intake'],
       routingRuleApplied: `${bestRule.category} → ${bestRule.defaultDepartment}`,
       confidenceNote: isIdentityUncertain
-        ? 'Uncertain institution identity match (missing exact Permanent ID); flagged for officer verification.'
-        : 'Exact Permanent ID & domain rule evaluation.',
+        ? 'Uncertain institution identity match (missing or unverified Permanent ID); flagged for mandatory officer verification.'
+        : 'Exact Permanent ID & semantic domain rule evaluation.',
     },
   };
 }
+

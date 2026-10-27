@@ -430,7 +430,7 @@ export const LoginPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
                 <button
                   type="submit"
                   disabled={isAuthenticating}
@@ -441,14 +441,6 @@ export const LoginPage: React.FC = () => {
                       ? 'Verifying Credentials...'
                       : `Sign In as ${selectedProfile.shortLabel}`}
                   </span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => loginWithRole(selectedRole, emailInput.trim())}
-                  className="neu-btn-secondary w-full py-3.5 rounded-[16px] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer text-theme-blue"
-                >
-                  <span>Instant Demo Access</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>

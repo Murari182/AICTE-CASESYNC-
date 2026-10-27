@@ -69,8 +69,8 @@ export function synchronizeOperationalAlerts(params: {
         }
         return;
       }
-      nextAlerts.unshift(candidate);
-      byKey.set(key, 0);
+      nextAlerts.push(candidate);
+      byKey.set(key, nextAlerts.length - 1);
     }
   };
 

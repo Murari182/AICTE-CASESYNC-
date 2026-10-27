@@ -1,0 +1,542 @@
+[
+  {
+    "id": "TRN-001",
+    "category": "Regulatory Norms & Cadre Compliance",
+    "bureau": "Regulation Bureau (RB)",
+    "priority": "Critical",
+    "split": "train",
+    "title": "Severe faculty cadre ratio deficiency and unapproved adjunct appointments in B.Tech CSE",
+    "description": "Audit reveals faculty-student ratio dropped to 1:34 against mandatory 1:20 norm due to mass resignations and ghost faculty listed on muster rolls."
+  },
+  {
+    "id": "TRN-002",
+    "category": "Regulatory Norms & Cadre Compliance",
+    "bureau": "Regulation Bureau (RB)",
+    "priority": "Critical",
+    "split": "train",
+    "title": "Excess admission beyond AICTE approved intake in MCA and MBA programmes",
+    "description": "Institution admitted 42 supernumerary students above the sanctioned EoA intake without statutory approval, violating AICTE Regulation Bureau norms."
+  },
+  {
+    "id": "TRN-003",
+    "category": "Regulatory Norms & Cadre Compliance",
+    "bureau": "Regulation Bureau (RB)",
+    "priority": "Critical",
+    "split": "train",
+    "title": "Collection of illegal capitation fee and unapproved institutional development charges",
+    "description": "Management is forcing first-year engineering admits to pay cash capitation donations outside the state fee regulatory committee structure."
+  },
+  {
+    "id": "TRN-004",
+    "category": "Regulatory Norms & Cadre Compliance",
+    "bureau": "Regulation Bureau (RB)",
+    "priority": "Critical",
+    "split": "train",
+    "title": "Operation of unapproved off-campus study center and franchise technical diploma",
+    "description": "Institute is running unauthorized off-campus B.Tech classes in a commercial complex without AICTE statutory approval or show-cause clearance."
+  },
+  {
+    "id": "TRN-005",
+    "category": "Regulatory Norms & Cadre Compliance",
+    "bureau": "Regulation Bureau (RB)",
+    "priority": "High",
+    "split": "train",
+    "title": "Violation of AICTE Principal qualification norms and cadre structure",
+    "description": "Acting principal lacks Ph.D. and minimum professor cadre experience mandated under AICTE Regulation Bureau statutory gazette notifications."
+  },
+  {
+    "id": "TRN-006",
+    "category": "Regulatory Norms & Cadre Compliance",
+    "bureau": "Regulation Bureau (RB)",
+    "priority": "Critical",
+    "split": "train",
+    "title": "Show-cause notice compliance failure regarding duplicate faculty PAN registrations",
+    "description": "Twelve faculty members shown on regular payroll are simultaneously registered full-time at sister institutions under the same educational trust."
+  },
+  {
+    "id": "TRN-007",
+    "category": "Regulatory Norms & Cadre Compliance",
+    "bureau": "Regulation Bureau (RB)",
+    "priority": "High",
+    "split": "train",
+    "title": "Non-compliance with Expert Visit Committee EVC deficiency rectification directive",
+    "description": "Institution failed to rectify critical instructional area and professor cadre deficiencies within 60 days of Regulation Bureau EVC inspection."
+  },
+  {
+    "id": "TRN-008",
+    "category": "Regulatory Norms & Cadre Compliance",
+    "bureau": "Regulation Bureau (RB)",
+    "priority": "Critical",
+    "split": "train",
+    "title": "Misrepresentation of land ownership and built-up Carpet Area in statutory regulatory filing",
+    "description": "Vigilance inquiry indicates mortgaged institutional land and shared classrooms with a non-technical degree college violating AICTE regulatory norms."
+  },
+  {
+    "id": "TRN-009",
+    "category": "Regulatory Norms & Cadre Compliance",
+    "bureau": "Regulation Bureau (RB)",
+    "priority": "Critical",
+    "split": "val",
+    "title": "Statutory norm violation through 48% faculty cadre deficit and biometric attendance manipulation",
+    "description": "Regulation Bureau complaint regarding acute shortage of regular associate professors and fabricated faculty roster during statutory scrutiny."
+  },
+  {
+    "id": "TRN-010",
+    "category": "Regulatory Norms & Cadre Compliance",
+    "bureau": "Regulation Bureau (RB)",
+    "priority": "Critical",
+    "split": "val",
+    "title": "Unauthorized excess intake admission and capitation fee demand in B.Tech AI",
+    "description": "Complaint alleging unapproved excess admission above sanctioned intake and mandatory cash capitation fee collection in violation of AICTE regulations."
+  },
+  {
+    "id": "TRN-011",
+    "category": "Regulatory Norms & Cadre Compliance",
+    "bureau": "Regulation Bureau (RB)",
+    "priority": "High",
+    "split": "val",
+    "title": "Show-cause inquiry on non-existent Ph.D. cadre faculty and norm violation",
+    "description": "Statutory complaint to Regulation Bureau reporting zero regular professors in ECE and Mechanical departments against mandatory cadre ratio norms."
+  },
+  {
+    "id": "TRN-012",
+    "category": "Regulatory Norms & Cadre Compliance",
+    "bureau": "Regulation Bureau (RB)",
+    "priority": "Critical",
+    "split": "train",
+    "title": "Breach of AICTE punitive action order on reduced intake compliance",
+    "description": "Despite Regulation Bureau 25% intake reduction penalty for regulatory deficiencies, institution admitted full batch without statutory restoration."
+  },
+  {
+    "id": "TRN-013",
+    "category": "Student & Stakeholder Public Grievance",
+    "bureau": "Public Grievance Redressal Cell (PGRC)",
+    "priority": "High",
+    "split": "train",
+    "title": "Non-refund of tuition fee after admission cancellation within AICTE counselling deadline",
+    "description": "Student withdrew admission before last round of counselling, but college refuses to refund Rs 92,000 tuition fee and retains original mark sheets."
+  },
+  {
+    "id": "TRN-014",
+    "category": "Student & Stakeholder Public Grievance",
+    "bureau": "Public Grievance Redressal Cell (PGRC)",
+    "priority": "High",
+    "split": "train",
+    "title": "Pragati Scholarship institute-level verification pending on National Scholarship Portal",
+    "description": "Thirty-four eligible girl students awaiting nodal officer verification for AICTE Pragati scholarship disbursement before portal cutoff."
+  },
+  {
+    "id": "TRN-015",
+    "category": "Student & Stakeholder Public Grievance",
+    "bureau": "Public Grievance Redressal Cell (PGRC)",
+    "priority": "Critical",
+    "split": "train",
+    "title": "Original 10th and 12th mark sheets withheld by college registrar to block student transfer",
+    "description": "Public grievance alleging illegal retention of original academic certificates and demand of full 4-year tuition fee for issuing transfer certificate."
+  },
+  {
+    "id": "TRN-016",
+    "category": "Student & Stakeholder Public Grievance",
+    "bureau": "Public Grievance Redressal Cell (PGRC)",
+    "priority": "Medium",
+    "split": "train",
+    "title": "Saksham Scholarship disability certificate re-upload and DBT disbursement delay",
+    "description": "Specially-abled B.Tech student requests PGRC intervention to re-enable Saksham scholarship document verification and release pending DBT fellowship."
+  },
+  {
+    "id": "TRN-017",
+    "category": "Student & Stakeholder Public Grievance",
+    "bureau": "Public Grievance Redressal Cell (PGRC)",
+    "priority": "High",
+    "split": "train",
+    "title": "University examination roll numbers not issued to admitted first-year MCA students",
+    "description": "Admitted MCA students filed public grievance with PGRC after failing to receive university enrollment and exam hall tickets two weeks before finals."
+  },
+  {
+    "id": "TRN-018",
+    "category": "Student & Stakeholder Public Grievance",
+    "bureau": "Public Grievance Redressal Cell (PGRC)",
+    "priority": "Medium",
+    "split": "train",
+    "title": "Academic Bank of Credits ABC ID mapping error for lateral entry diploma students",
+    "description": "Second-year lateral entry engineering students unable to renew PM-USP scholarship due to unmapped ABC IDs in the institutional student registry."
+  },
+  {
+    "id": "TRN-019",
+    "category": "Student & Stakeholder Public Grievance",
+    "bureau": "Public Grievance Redressal Cell (PGRC)",
+    "priority": "High",
+    "split": "train",
+    "title": "Student harassment and arbitrary hostel expulsion without Student Grievance Redressal Committee hearing",
+    "description": "Complainant reports functional failure of internal SGRC cell and unfair fine imposed on students raising mess hygiene and hostel safety grievances."
+  },
+  {
+    "id": "TRN-020",
+    "category": "Student & Stakeholder Public Grievance",
+    "bureau": "Public Grievance Redressal Cell (PGRC)",
+    "priority": "Low",
+    "split": "train",
+    "title": "ATAL Academy FDP participation certificate synchronization delay on portal",
+    "description": "Participants of 6-day ATAL Academy training programme have not received digital certificates in their public grievance portal dashboard."
+  },
+  {
+    "id": "TRN-021",
+    "category": "Student & Stakeholder Public Grievance",
+    "bureau": "Public Grievance Redressal Cell (PGRC)",
+    "priority": "High",
+    "split": "val",
+    "title": "Refusal to refund admission tuition fee and retention of original migration certificate",
+    "description": "Student stakeholder grievance requesting immediate fee refund and release of withheld original certificates under AICTE PGRC refund rules."
+  },
+  {
+    "id": "TRN-022",
+    "category": "Student & Stakeholder Public Grievance",
+    "bureau": "Public Grievance Redressal Cell (PGRC)",
+    "priority": "High",
+    "split": "val",
+    "title": "Delay in AICTE Pragati and Saksham scholarship DBT verification by institute nodal officer",
+    "description": "Public grievance from students regarding pending scholarship verification and delayed fellowship disbursement on the NSP portal."
+  },
+  {
+    "id": "TRN-023",
+    "category": "Student & Stakeholder Public Grievance",
+    "bureau": "Public Grievance Redressal Cell (PGRC)",
+    "priority": "High",
+    "split": "val",
+    "title": "Withheld original degree certificates and arbitrary caution deposit deduction for graduating batch",
+    "description": "Graduating B.Pharm students report that college administration withheld provisional certificates and refused caution money fee refund."
+  },
+  {
+    "id": "TRN-024",
+    "category": "Student & Stakeholder Public Grievance",
+    "bureau": "Public Grievance Redressal Cell (PGRC)",
+    "priority": "Medium",
+    "split": "train",
+    "title": "Non-disbursement of GATE PG scholarship stipend to M.Tech regular scholars",
+    "description": "Postgraduate M.Tech GATE qualified students have not received monthly AICTE PG scholarship stipend for four consecutive months due to attendance upload lag."
+  },
+  {
+    "id": "TRN-025",
+    "category": "Extension of Approval (EoA) & Intake",
+    "bureau": "Approval Bureau (AB)",
+    "priority": "High",
+    "split": "train",
+    "title": "Extension of Approval EoA 2026-27 seat intake discrepancy in B.Tech AI and Data Science",
+    "description": "Approval Bureau EoA letter reflects 60 seats instead of 120 approved seats despite compliant laboratory equipment affidavit and scrutiny clearance."
+  },
+  {
+    "id": "TRN-026",
+    "category": "Extension of Approval (EoA) & Intake",
+    "bureau": "Approval Bureau (AB)",
+    "priority": "Low",
+    "split": "train",
+    "title": "Compliance affidavit and laboratory stock register update for EoA 2026-27 cycle",
+    "description": "Submission of updated CAD/CAM workstation laboratory inventory and fire safety renewal affidavit for annual Extension of Approval."
+  },
+  {
+    "id": "TRN-027",
+    "category": "Extension of Approval (EoA) & Intake",
+    "bureau": "Approval Bureau (AB)",
+    "priority": "Medium",
+    "split": "train",
+    "title": "Application for progressive closure of second-shift Diploma programme and intake reduction",
+    "description": "Institution seeks Approval Bureau clearance for progressive closure of under-enrolled Diploma shift and revision of sanctioned EoA intake."
+  },
+  {
+    "id": "TRN-028",
+    "category": "Extension of Approval (EoA) & Intake",
+    "bureau": "Approval Bureau (AB)",
+    "priority": "High",
+    "split": "train",
+    "title": "Introduction of new emerging area B.Tech Cyber Security course in EoA approval letter",
+    "description": "Request to Approval Bureau for issuance of revised EoA corrigendum incorporating NBA accreditation status and additional 60 seat intake."
+  },
+  {
+    "id": "TRN-029",
+    "category": "Extension of Approval (EoA) & Intake",
+    "bureau": "Approval Bureau (AB)",
+    "priority": "Medium",
+    "split": "train",
+    "title": "Conversion of women-only technical institution to co-educational status in EoA portal",
+    "description": "Submission of Trust resolution, digital compliance affidavit, and scrutiny fee receipt to Approval Bureau for EoA institutional category conversion."
+  },
+  {
+    "id": "TRN-030",
+    "category": "Extension of Approval (EoA) & Intake",
+    "bureau": "Approval Bureau (AB)",
+    "priority": "High",
+    "split": "train",
+    "title": "Merger of two child institutions under single AICTE Permanent ID and EoA consolidation",
+    "description": "Application under Approval Process Handbook for amalgamation of pharmacy and engineering campuses into a single consolidated Extension of Approval letter."
+  },
+  {
+    "id": "TRN-031",
+    "category": "Extension of Approval (EoA) & Intake",
+    "bureau": "Approval Bureau (AB)",
+    "priority": "Medium",
+    "split": "train",
+    "title": "Restoration of intake seats following NBA accreditation renewal submission to Approval Bureau",
+    "description": "Institute uploaded valid 3-year NBA accreditation letter and compliance affidavit requesting restoration of 180 B.Tech Mechanical intake in EoA."
+  },
+  {
+    "id": "TRN-032",
+    "category": "Extension of Approval (EoA) & Intake",
+    "bureau": "Approval Bureau (AB)",
+    "priority": "Low",
+    "split": "train",
+    "title": "Correction of programme nomenclature in Extension of Approval EoA 2026-27 certificate",
+    "description": "Clerical mismatch between university syllabus title and Approval Bureau EoA approval letter for M.Tech Structural Engineering."
+  },
+  {
+    "id": "TRN-033",
+    "category": "Extension of Approval (EoA) & Intake",
+    "bureau": "Approval Bureau (AB)",
+    "priority": "High",
+    "split": "val",
+    "title": "Discrepancy in sanctioned seat intake and laboratory compliance affidavit on EoA approval letter",
+    "description": "Petition to Approval Bureau regarding Extension of Approval EoA seat intake corrigendum and scrutiny of laboratory readiness."
+  },
+  {
+    "id": "TRN-034",
+    "category": "Extension of Approval (EoA) & Intake",
+    "bureau": "Approval Bureau (AB)",
+    "priority": "Medium",
+    "split": "val",
+    "title": "Annual EoA extension of approval application and NBA accreditation intake increase",
+    "description": "Approval Bureau filing for seat intake expansion from 60 to 120 based on valid accreditation and updated instructional laboratory compliance affidavit."
+  },
+  {
+    "id": "TRN-035",
+    "category": "Extension of Approval (EoA) & Intake",
+    "bureau": "Approval Bureau (AB)",
+    "priority": "Low",
+    "split": "val",
+    "title": "Submission of digital scrutiny affidavit and laboratory stock register for EoA",
+    "description": "Routine Extension of Approval EoA documentation update for computer science laboratories and annual intake confirmation."
+  },
+  {
+    "id": "TRN-036",
+    "category": "Extension of Approval (EoA) & Intake",
+    "bureau": "Approval Bureau (AB)",
+    "priority": "Medium",
+    "split": "train",
+    "title": "Approval Bureau scrutiny of supernumerary Tuition Fee Waiver TFW seat allocation in EoA",
+    "description": "Request to verify 5% TFW supernumerary intake quota calculation in the institutional Extension of Approval table."
+  },
+  {
+    "id": "TRN-037",
+    "category": "Faculty Service & Salary Grievance",
+    "bureau": "Faculty Grievance Cell (FGC)",
+    "priority": "High",
+    "split": "train",
+    "title": "Six-month salary arrears and withheld relieving letter for resigning engineering faculty",
+    "description": "Assistant professors in CSE department report unpaid salary for 6 months, non-remittance of EPF, and refusal to issue relieving and experience certificates."
+  },
+  {
+    "id": "TRN-038",
+    "category": "Faculty Service & Salary Grievance",
+    "bureau": "Faculty Grievance Cell (FGC)",
+    "priority": "High",
+    "split": "train",
+    "title": "Delayed Career Advancement Scheme CAS promotion and 7th CPC pay scale arrears",
+    "description": "Senior Mechanical Engineering faculty members have not received 7th Central Pay Commission scale implementation and CAS stage promotion arrears."
+  },
+  {
+    "id": "TRN-039",
+    "category": "Faculty Service & Salary Grievance",
+    "bureau": "Faculty Grievance Cell (FGC)",
+    "priority": "High",
+    "split": "train",
+    "title": "Arbitrary termination of regular faculty without notice period or service book settlement",
+    "description": "Faculty Grievance Cell complaint against sudden termination of five regular lecturers mid-semester without three months notice pay or experience certificate."
+  },
+  {
+    "id": "TRN-040",
+    "category": "Faculty Service & Salary Grievance",
+    "bureau": "Faculty Grievance Cell (FGC)",
+    "priority": "Medium",
+    "split": "train",
+    "title": "Non-payment of Dearness Allowance DA and forced signature on full salary acquittance roll",
+    "description": "College credits 50% below AICTE 7th CPC pay scale into bank accounts while coercing faculty to sign full salary vouchers."
+  },
+  {
+    "id": "TRN-041",
+    "category": "Faculty Service & Salary Grievance",
+    "bureau": "Faculty Grievance Cell (FGC)",
+    "priority": "High",
+    "split": "train",
+    "title": "Retention of original Ph.D. degree certificate and service book of Assistant Professor",
+    "description": "Faculty member selected at NIT is unable to join because private engineering college management refuses to release relieving letter and original degree."
+  },
+  {
+    "id": "TRN-042",
+    "category": "Faculty Service & Salary Grievance",
+    "bureau": "Faculty Grievance Cell (FGC)",
+    "priority": "Medium",
+    "split": "train",
+    "title": "Denial of maternity leave salary and Ph.D. increment under AICTE service regulations",
+    "description": "Associate Professor denied statutory maternity leave benefits and three non-compounded Ph.D. increments mandated under 7th CPC pay norms."
+  },
+  {
+    "id": "TRN-043",
+    "category": "Faculty Service & Salary Grievance",
+    "bureau": "Faculty Grievance Cell (FGC)",
+    "priority": "High",
+    "split": "train",
+    "title": "Unpaid gratuity and provident fund arrears for retired polytechnic head of department",
+    "description": "Retired HoD petitions Faculty Grievance Cell for release of 14 months pending salary arrears, gratuity, and updated service book."
+  },
+  {
+    "id": "TRN-044",
+    "category": "Faculty Service & Salary Grievance",
+    "bureau": "Faculty Grievance Cell (FGC)",
+    "priority": "High",
+    "split": "train",
+    "title": "Unlawful salary deduction during summer vacation break for regular teaching faculty",
+    "description": "Management withholds June and July salary every academic year for regular faculty despite continuous multi-year service."
+  },
+  {
+    "id": "TRN-045",
+    "category": "Faculty Service & Salary Grievance",
+    "bureau": "Faculty Grievance Cell (FGC)",
+    "priority": "High",
+    "split": "val",
+    "title": "Non-payment of 8 months faculty salary arrears and withheld relieving order after resignation",
+    "description": "Resigning faculty members petition Faculty Grievance Cell over unpaid 7th CPC salary arrears, withheld experience certificate, and relieving letter."
+  },
+  {
+    "id": "TRN-046",
+    "category": "Faculty Service & Salary Grievance",
+    "bureau": "Faculty Grievance Cell (FGC)",
+    "priority": "High",
+    "split": "val",
+    "title": "Non-implementation of 7th CPC pay scale and CAS promotion for senior professors",
+    "description": "Faculty service grievance regarding stagnation in 6th pay commission scale, unpaid DA arrears, and blocked Career Advancement Scheme promotion."
+  },
+  {
+    "id": "TRN-047",
+    "category": "Faculty Service & Salary Grievance",
+    "bureau": "Faculty Grievance Cell (FGC)",
+    "priority": "Medium",
+    "split": "val",
+    "title": "Refusal to issue faculty experience certificate and service book upon completion of notice period",
+    "description": "Assistant professor completed 3-month notice period after resignation but management refuses to issue relieving letter and pending salary."
+  },
+  {
+    "id": "TRN-048",
+    "category": "Faculty Service & Salary Grievance",
+    "bureau": "Faculty Grievance Cell (FGC)",
+    "priority": "High",
+    "split": "train",
+    "title": "Withholding of AICTE QIP study leave salary for faculty pursuing doctoral research",
+    "description": "Sponsored QIP scholar reports stoppage of monthly salary and allowances by parent engineering institution during approved study leave."
+  },
+  {
+    "id": "TRN-049",
+    "category": "Regional Verification & Inspection",
+    "bureau": "Regional Office (SWRO)",
+    "priority": "Medium",
+    "split": "train",
+    "title": "Regional Scrutiny Committee physical site visit report for campus address verification",
+    "description": "Regional Office field inspection conducted to verify campus boundary demarcation, land conversion certificate, and university affiliation NOC."
+  },
+  {
+    "id": "TRN-050",
+    "category": "Regional Verification & Inspection",
+    "bureau": "Regional Office (SWRO)",
+    "priority": "Low",
+    "split": "train",
+    "title": "Local verification of barrier-free built environment and ramp compliance by Regional Office",
+    "description": "Submission of physical inspection photographs and structural audit report to Regional Office following regional observation on PWD accessibility."
+  },
+  {
+    "id": "TRN-051",
+    "category": "Regional Verification & Inspection",
+    "bureau": "Regional Office (SWRO)",
+    "priority": "Medium",
+    "split": "train",
+    "title": "State DTE and affiliating university NOC verification for campus location change",
+    "description": "Regional Office liaison desk verifying state government NOC and university affiliation concurrence for shifting campus within the same district."
+  },
+  {
+    "id": "TRN-052",
+    "category": "Regional Verification & Inspection",
+    "bureau": "Regional Office (SWRO)",
+    "priority": "Medium",
+    "split": "train",
+    "title": "Regional physical verification of newly constructed workshop and high-voltage laboratory",
+    "description": "Regional Officer site visit to verify completion of civil construction, occupancy certificate, and physical readiness of electrical labs."
+  },
+  {
+    "id": "TRN-053",
+    "category": "Regional Verification & Inspection",
+    "bureau": "Regional Office (SWRO)",
+    "priority": "High",
+    "split": "train",
+    "title": "Campus identity and Permanent ID verification by Regional Office in industrial corridor",
+    "description": "Regional verification desk tasked with physical site inspection to confirm whether two similarly named campuses share a single AICTE Permanent ID."
+  },
+  {
+    "id": "TRN-054",
+    "category": "Regional Verification & Inspection",
+    "bureau": "Regional Office (SWRO)",
+    "priority": "Low",
+    "split": "train",
+    "title": "Verification of state pollution control board and municipal fire NOC by Regional Office",
+    "description": "Local inspection team verifying authenticity of municipal building plan approval and regional statutory safety certificates."
+  },
+  {
+    "id": "TRN-055",
+    "category": "Regional Verification & Inspection",
+    "bureau": "Regional Office (SWRO)",
+    "priority": "Medium",
+    "split": "train",
+    "title": "Regional Office joint verification with affiliating technological university registrar",
+    "description": "Coordination between Regional Officer and state technical university to reconcile physical classroom capacity and affiliation NOC."
+  },
+  {
+    "id": "TRN-056",
+    "category": "Regional Verification & Inspection",
+    "bureau": "Regional Office (SWRO)",
+    "priority": "Low",
+    "split": "train",
+    "title": "Site visit verification of rain-water harvesting and solar power installation at regional campus",
+    "description": "Regional Office compliance check on green campus infrastructure and local panchayat building land records."
+  },
+  {
+    "id": "TRN-057",
+    "category": "Regional Verification & Inspection",
+    "bureau": "Regional Office (SWRO)",
+    "priority": "Medium",
+    "split": "val",
+    "title": "Regional Office physical site visit and local verification of university affiliation NOC",
+    "description": "Regional scrutiny team conducted physical verification of campus address, land records, and affiliating university NOC compliance."
+  },
+  {
+    "id": "TRN-058",
+    "category": "Regional Verification & Inspection",
+    "bureau": "Regional Office (SWRO)",
+    "priority": "Low",
+    "split": "val",
+    "title": "Local verification of campus barrier-free ramp and building occupancy certificate by Regional Officer",
+    "description": "Regional verification of physical infrastructure, municipal occupancy certificate, and site visit compliance observations."
+  },
+  {
+    "id": "TRN-059",
+    "category": "Regional Verification & Inspection",
+    "bureau": "Regional Office (SWRO)",
+    "priority": "Medium",
+    "split": "val",
+    "title": "Verification of campus address and state DTE NOC by Regional Office inspection committee",
+    "description": "Site visit report from Regional Office confirming physical campus boundaries and state DTE no-objection certificate."
+  },
+  {
+    "id": "TRN-060",
+    "category": "Regional Verification & Inspection",
+    "bureau": "Regional Office (SWRO)",
+    "priority": "Medium",
+    "split": "train",
+    "title": "Regional inspection of hostel building safety and local district collector land certificate",
+    "description": "Field verification by Regional Office committee to authenticate district revenue land title and physical hostel blocks."
+  }
+]
