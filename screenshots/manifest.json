@@ -1,0 +1,583 @@
+{
+  "generatedAt": "2026-10-27T13:18:25.628Z",
+  "totalScreenshots": 57,
+  "successfulCount": 57,
+  "failedCount": 0,
+  "desktopCount": 34,
+  "mobileCount": 11,
+  "modalsCount": 8,
+  "formsCount": 4,
+  "baseUrl": "http://localhost:3000",
+  "screenshots": [
+    {
+      "filename": "desktop/01-landing-page-hero.png",
+      "status": "SUCCESS",
+      "fileSize": 188415,
+      "category": "desktop",
+      "screenName": "Public Landing Page - Hero & Real-time Metrics",
+      "navigationPath": "/",
+      "viewport": "1440x900",
+      "uiState": "Initial default landing page view with real-time institutional metrics counters"
+    },
+    {
+      "filename": "desktop/02-landing-page-features.png",
+      "status": "SUCCESS",
+      "fileSize": 156167,
+      "category": "desktop",
+      "screenName": "Public Landing Page - Core Features & Pillars",
+      "navigationPath": "/#core-features",
+      "viewport": "1440x900",
+      "uiState": "Section displaying core capability cards and AICTE grievance governance features"
+    },
+    {
+      "filename": "desktop/03-landing-page-architecture.png",
+      "status": "SUCCESS",
+      "fileSize": 166384,
+      "category": "desktop",
+      "screenName": "Public Landing Page - 5-Layer Overlap Architecture",
+      "navigationPath": "/#how-it-works",
+      "viewport": "1440x900",
+      "uiState": "Visual explanation of the 5-layer relationship detection engine and joint hearings"
+    },
+    {
+      "filename": "desktop/04-login-screen.png",
+      "status": "SUCCESS",
+      "fileSize": 213332,
+      "category": "desktop",
+      "screenName": "Authentication Portal - Official Bureau Account Directory",
+      "navigationPath": "/login",
+      "viewport": "1440x900",
+      "uiState": "Official login portal with RBAC account selector and server verification badges"
+    },
+    {
+      "filename": "forms/01-login-form-empty-validation.png",
+      "status": "SUCCESS",
+      "fileSize": 209164,
+      "category": "forms",
+      "screenName": "Login Form - Input Validation Warning",
+      "navigationPath": "/login",
+      "viewport": "1440x900",
+      "uiState": "Form error message displayed when attempting authentication without credentials"
+    },
+    {
+      "filename": "desktop/05-login-role-selected-rb.png",
+      "status": "SUCCESS",
+      "fileSize": 215751,
+      "category": "desktop",
+      "screenName": "Login Screen - Regulation Bureau Account Selected",
+      "navigationPath": "/login (RB Selected)",
+      "viewport": "1440x900",
+      "uiState": "Displaying Regulation Bureau account scope, description, and permitted permissions preview"
+    },
+    {
+      "filename": "desktop/06-login-role-selected-pgrc.png",
+      "status": "SUCCESS",
+      "fileSize": 216258,
+      "category": "desktop",
+      "screenName": "Login Screen - PGRC Officer Account Selected",
+      "navigationPath": "/login (PGRC Selected)",
+      "viewport": "1440x900",
+      "uiState": "Displaying Public Grievance Redressal Cell account permissions and description"
+    },
+    {
+      "filename": "desktop/07-dashboard-overview.png",
+      "status": "SUCCESS",
+      "fileSize": 260543,
+      "category": "desktop",
+      "screenName": "Executive Dashboard - Consolidated Overview",
+      "navigationPath": "/workspace#overview",
+      "viewport": "1440x900",
+      "uiState": "Live KPI cards (Total, Pending, Under Process, Disposed, Transferred, Overdue SLA) and case ledger"
+    },
+    {
+      "filename": "desktop/08-dashboard-filtered-bureau.png",
+      "status": "SUCCESS",
+      "fileSize": 260489,
+      "category": "desktop",
+      "screenName": "Dashboard - Filtered by Regulation Bureau",
+      "navigationPath": "/workspace#overview (Bureau Filtered)",
+      "viewport": "1440x900",
+      "uiState": "Dashboard KPI metrics and case records dynamically scoped to Regulation Bureau"
+    },
+    {
+      "filename": "modals/05-notifications-popover-open.png",
+      "status": "SUCCESS",
+      "fileSize": 252921,
+      "category": "modals",
+      "screenName": "Operational Alerts - Quick Popover Panel",
+      "navigationPath": "/workspace (Notifications Panel Open)",
+      "viewport": "1440x900",
+      "uiState": "Top navigation bar notification dropdown displaying active operational alerts and unread badges"
+    },
+    {
+      "filename": "modals/06-global-search-autocomplete-dropdown.png",
+      "status": "SUCCESS",
+      "fileSize": 284794,
+      "category": "modals",
+      "screenName": "Global Search - Live Autocomplete Suggestions",
+      "navigationPath": "/workspace (Search Active)",
+      "viewport": "1440x900",
+      "uiState": "Instant search dropdown matching complaint cases and institutions across the entire directory"
+    },
+    {
+      "filename": "desktop/09-case-management-all-cases.png",
+      "status": "SUCCESS",
+      "fileSize": 261980,
+      "category": "desktop",
+      "screenName": "Complaint Case Management - Master Register",
+      "navigationPath": "/workspace#cases",
+      "viewport": "1440x900",
+      "uiState": "Multi-bureau case register with status badges, AICTE PID links, overlap tags, and disposal SLA"
+    },
+    {
+      "filename": "desktop/10-case-management-pending-tab.png",
+      "status": "SUCCESS",
+      "fileSize": 267874,
+      "category": "desktop",
+      "screenName": "Case Management - Pending Triage Cases",
+      "navigationPath": "/workspace#cases (Pending Status Tab)",
+      "viewport": "1440x900",
+      "uiState": "Filtered to cases awaiting initial bureau intake verification and officer assignment"
+    },
+    {
+      "filename": "desktop/11-case-management-under-process-tab.png",
+      "status": "SUCCESS",
+      "fileSize": 256053,
+      "category": "desktop",
+      "screenName": "Case Management - Under Process Cases",
+      "navigationPath": "/workspace#cases (Under Process Tab)",
+      "viewport": "1440x900",
+      "uiState": "Complaints currently under active inquiry, showcause notice, or inspection verification"
+    },
+    {
+      "filename": "desktop/12-case-management-overdue-tab.png",
+      "status": "SUCCESS",
+      "fileSize": 263465,
+      "category": "desktop",
+      "screenName": "Case Management - Overdue SLA Cases",
+      "navigationPath": "/workspace#cases (Overdue SLA Tab)",
+      "viewport": "1440x900",
+      "uiState": "Cases that have breached statutory disposal deadlines requiring immediate escalation"
+    },
+    {
+      "filename": "desktop/13-case-management-date-range-filter.png",
+      "status": "SUCCESS",
+      "fileSize": 267380,
+      "category": "desktop",
+      "screenName": "Case Management - Date-Range Filter Active",
+      "navigationPath": "/workspace#cases (Date Filtered)",
+      "viewport": "1440x900",
+      "uiState": "Complaints filtered by 7-day receipt window with custom date selection pills"
+    },
+    {
+      "filename": "desktop/14-case-management-search-filtered.png",
+      "status": "SUCCESS",
+      "fileSize": 251535,
+      "category": "desktop",
+      "screenName": "Case Management - Search Filtered by Case ID",
+      "navigationPath": "/workspace#cases (Searched)",
+      "viewport": "1440x900",
+      "uiState": "Real-time table filtering showing single matching complaint record and associated PID"
+    },
+    {
+      "filename": "desktop/15-case-management-empty-search.png",
+      "status": "SUCCESS",
+      "fileSize": 230253,
+      "category": "desktop",
+      "screenName": "Case Management - Empty Search State",
+      "navigationPath": "/workspace#cases (Empty Results)",
+      "viewport": "1440x900",
+      "uiState": "Helpful empty-state message when no complaints match search/filter criteria"
+    },
+    {
+      "filename": "modals/01-log-new-complaint-modal.png",
+      "status": "SUCCESS",
+      "fileSize": 272278,
+      "category": "modals",
+      "screenName": "New Complaint Intake - Modal Dialog",
+      "navigationPath": "/workspace#cases (New Complaint Modal)",
+      "viewport": "1440x900",
+      "uiState": "Comprehensive modal dialog for registering a cross-bureau institutional grievance"
+    },
+    {
+      "filename": "forms/03-new-complaint-form-filled.png",
+      "status": "SUCCESS",
+      "fileSize": 272278,
+      "category": "forms",
+      "screenName": "New Complaint Form - Valid Sample Input",
+      "navigationPath": "/workspace#cases (Form Filled)",
+      "viewport": "1440x900",
+      "uiState": "Form pre-filled with complete grievance details, category routing, and assigned bureau"
+    },
+    {
+      "filename": "desktop/16-case-details-view.png",
+      "status": "SUCCESS",
+      "fileSize": 270021,
+      "category": "desktop",
+      "screenName": "Case Dossier & Lifecycle Management View",
+      "navigationPath": "/workspace#case-detail",
+      "viewport": "1440x900",
+      "uiState": "Complete case file with institutional summary strip, status badges, and action controls"
+    },
+    {
+      "filename": "desktop/17-case-details-linked-overlaps.png",
+      "status": "SUCCESS",
+      "fileSize": 270021,
+      "category": "desktop",
+      "screenName": "Case Dossier - Cross-Bureau Overlap Panel",
+      "navigationPath": "/workspace#case-detail (Overlaps Scrolled)",
+      "viewport": "1440x900",
+      "uiState": "Connected sibling cases across Regulation Bureau and PGRC with shared institution PID"
+    },
+    {
+      "filename": "desktop/18-case-details-audit-timeline.png",
+      "status": "SUCCESS",
+      "fileSize": 270021,
+      "category": "desktop",
+      "screenName": "Case Dossier - Action & Hearing Timeline",
+      "navigationPath": "/workspace#case-detail (Timeline)",
+      "viewport": "1440x900",
+      "uiState": "Sequential audit log of past showcause notices, inspection dates, and officer remarks"
+    },
+    {
+      "filename": "forms/04-case-details-action-form.png",
+      "status": "SUCCESS",
+      "fileSize": 270021,
+      "category": "forms",
+      "screenName": "Case Dossier - Processing & Remarks Form",
+      "navigationPath": "/workspace#case-detail (Action Form)",
+      "viewport": "1440x900",
+      "uiState": "Form controls for updating case status, priority severity, officer assignment, and next actions"
+    },
+    {
+      "filename": "modals/02-transfer-case-modal.png",
+      "status": "SUCCESS",
+      "fileSize": 288994,
+      "category": "modals",
+      "screenName": "Inter-Bureau Case Transfer - Modal Dialog",
+      "navigationPath": "/workspace#case-detail (Transfer Modal)",
+      "viewport": "1440x900",
+      "uiState": "Formal transfer form with receiving bureau selection, justification notes, and SLA preservation"
+    },
+    {
+      "filename": "modals/03-escalate-case-modal.png",
+      "status": "SUCCESS",
+      "fileSize": 287981,
+      "category": "modals",
+      "screenName": "Two-Tier Authority Escalation - Modal Dialog",
+      "navigationPath": "/workspace#case-detail (Escalate Modal)",
+      "viewport": "1440x900",
+      "uiState": "Escalation form selecting Level 1 (Bureau Head) or Level 2 (Advisor-I / Competent Authority)"
+    },
+    {
+      "filename": "modals/04-mark-disposed-confirmation-modal.png",
+      "status": "SUCCESS",
+      "fileSize": 287278,
+      "category": "modals",
+      "screenName": "Case Disposal Resolution - Confirmation Dialog",
+      "navigationPath": "/workspace#case-detail (Disposal Modal)",
+      "viewport": "1440x900",
+      "uiState": "Confirmation dialog requiring final compliance resolution remarks before archiving case"
+    },
+    {
+      "filename": "desktop/19-institution-registry.png",
+      "status": "SUCCESS",
+      "fileSize": 246693,
+      "category": "desktop",
+      "screenName": "Institution Registry - Directory Table",
+      "navigationPath": "/workspace#institutions",
+      "viewport": "1440x900",
+      "uiState": "Master directory of technical colleges with AICTE Permanent IDs, accreditation, and active case counts"
+    },
+    {
+      "filename": "desktop/20-institution-registry-filtered.png",
+      "status": "SUCCESS",
+      "fileSize": 200124,
+      "category": "desktop",
+      "screenName": "Institution Registry - Regionally Filtered",
+      "navigationPath": "/workspace#institutions (Southern Region)",
+      "viewport": "1440x900",
+      "uiState": "Institutions filtered by Southern Regional Office jurisdiction with active compliance status"
+    },
+    {
+      "filename": "desktop/21-institution-detail-profile.png",
+      "status": "SUCCESS",
+      "fileSize": 246798,
+      "category": "desktop",
+      "screenName": "Institution 360 Profile - Single Coordinated View",
+      "navigationPath": "/workspace#institution-detail",
+      "viewport": "1440x900",
+      "uiState": "Single coordinated dossier with institutional identity, active complaints, and violation history"
+    },
+    {
+      "filename": "desktop/22-overlap-detection-queue.png",
+      "status": "SUCCESS",
+      "fileSize": 308307,
+      "category": "desktop",
+      "screenName": "5-Layer Overlap Detection Queue",
+      "navigationPath": "/workspace#overlaps",
+      "viewport": "1440x900",
+      "uiState": "Algorithmic relationship review queue displaying candidate duplicates, norm matches, and review buttons"
+    },
+    {
+      "filename": "desktop/23-overlap-case-comparison.png",
+      "status": "SUCCESS",
+      "fileSize": 308307,
+      "category": "desktop",
+      "screenName": "Overlap Detection - Side-by-Side Comparison",
+      "navigationPath": "/workspace#overlaps (Card Comparison)",
+      "viewport": "1440x900",
+      "uiState": "Side-by-side inspection of two sibling complaints with shared PID and matching keyword signals"
+    },
+    {
+      "filename": "desktop/24-bureau-coordination-center.png",
+      "status": "SUCCESS",
+      "fileSize": 263914,
+      "category": "desktop",
+      "screenName": "Inter-Bureau & Cell Coordination Workspace",
+      "navigationPath": "/workspace#coordination",
+      "viewport": "1440x900",
+      "uiState": "Cross-bureau collaboration center for joint hearings, shared evidence dossiers, and task delegation"
+    },
+    {
+      "filename": "desktop/25-transfers-and-escalations.png",
+      "status": "SUCCESS",
+      "fileSize": 253807,
+      "category": "desktop",
+      "screenName": "Transfers & Escalations Governance Hub",
+      "navigationPath": "/workspace#transfers",
+      "viewport": "1440x900",
+      "uiState": "Central ledger of pending bureau transfers and multi-tier senior management escalations"
+    },
+    {
+      "filename": "desktop/26-alerts-and-notifications.png",
+      "status": "SUCCESS",
+      "fileSize": 274370,
+      "category": "desktop",
+      "screenName": "Operational Alerts & Deadline Monitor Ledger",
+      "navigationPath": "/workspace#alerts",
+      "viewport": "1440x900",
+      "uiState": "Master alert ledger categorizing overdue SLA warnings, transfer approvals, and coordination notices"
+    },
+    {
+      "filename": "desktop/27-analytics-and-reports.png",
+      "status": "SUCCESS",
+      "fileSize": 238935,
+      "category": "desktop",
+      "screenName": "Executive Reports & Analytics Visualizations",
+      "navigationPath": "/workspace#reports",
+      "viewport": "1440x900",
+      "uiState": "Analytical charts displaying volume by category, bureau distribution, and resolution performance"
+    },
+    {
+      "filename": "desktop/28-audit-trail-ledger.png",
+      "status": "SUCCESS",
+      "fileSize": 269925,
+      "category": "desktop",
+      "screenName": "Tamper-Evident System Audit Trail",
+      "navigationPath": "/workspace#audit",
+      "viewport": "1440x900",
+      "uiState": "Cryptographic ledger of all administrative actions with timestamp, acting officer, and before/after diffs"
+    },
+    {
+      "filename": "desktop/29-audit-trail-filtered-transfers.png",
+      "status": "SUCCESS",
+      "fileSize": 269925,
+      "category": "desktop",
+      "screenName": "Audit Trail - Detailed Event Inspection",
+      "navigationPath": "/workspace#audit (Event Stream)",
+      "viewport": "1440x900",
+      "uiState": "Audit ledger capturing chronological event records and verified acting officer identities"
+    },
+    {
+      "filename": "desktop/30-system-settings-sla-rules.png",
+      "status": "SUCCESS",
+      "fileSize": 242391,
+      "category": "desktop",
+      "screenName": "System Governance - Configurable SLA & Overlap Rules",
+      "navigationPath": "/workspace#settings",
+      "viewport": "1440x900",
+      "uiState": "Administrative configuration for statutory disposal days, due soon warning window, and PID precedence"
+    },
+    {
+      "filename": "desktop/31-system-settings-bureau-routing.png",
+      "status": "SUCCESS",
+      "fileSize": 242391,
+      "category": "desktop",
+      "screenName": "System Governance - Bureau Intake Routing Matrix",
+      "navigationPath": "/workspace#settings (Routing Rules)",
+      "viewport": "1440x900",
+      "uiState": "Automated complaint routing rules mapping categories to default bureaus, SLA hours, and signals"
+    },
+    {
+      "filename": "forms/05-settings-sla-configuration-form.png",
+      "status": "SUCCESS",
+      "fileSize": 242391,
+      "category": "forms",
+      "screenName": "System Settings - SLA Parameters Form",
+      "navigationPath": "/workspace#settings (SLA Form)",
+      "viewport": "1440x900",
+      "uiState": "Editable numerical inputs for disposal window (days), warning threshold, and review similarity %"
+    },
+    {
+      "filename": "modals/07-reset-dataset-confirmation-dialog.png",
+      "status": "SUCCESS",
+      "fileSize": 248222,
+      "category": "modals",
+      "screenName": "System Governance - Reset Dataset Confirmation",
+      "navigationPath": "/workspace#settings (Reset Prompt)",
+      "viewport": "1440x900",
+      "uiState": "Safety prompt requiring explicit confirmation before restoring original seed data records"
+    },
+    {
+      "filename": "desktop/32-workspace-sidebar-collapsed.png",
+      "status": "SUCCESS",
+      "fileSize": 214245,
+      "category": "desktop",
+      "screenName": "Workspace App - Collapsed Sidebar Navigation",
+      "navigationPath": "/workspace#settings (Sidebar Collapsed)",
+      "viewport": "1440x900",
+      "uiState": "Compact icon-only sidebar maximizing screen real-estate for large data tables and graphs"
+    },
+    {
+      "filename": "desktop/33-workspace-dark-mode-dashboard.png",
+      "status": "SUCCESS",
+      "fileSize": 257817,
+      "category": "desktop",
+      "screenName": "Workspace App - Full Dark Mode Dashboard",
+      "navigationPath": "/workspace#overview (Dark Mode)",
+      "viewport": "1440x900",
+      "uiState": "High-contrast dark mode palette tailored for prolonged administrative review and low-light operation"
+    },
+    {
+      "filename": "desktop/34-workspace-dark-mode-case-management.png",
+      "status": "SUCCESS",
+      "fileSize": 267105,
+      "category": "desktop",
+      "screenName": "Workspace App - Dark Mode Case Ledger",
+      "navigationPath": "/workspace#cases (Dark Mode)",
+      "viewport": "1440x900",
+      "uiState": "Dark mode theme rendered across complaint tables, status badges, and filter bars"
+    },
+    {
+      "filename": "mobile/01-landing-page-mobile.png",
+      "status": "SUCCESS",
+      "fileSize": 77527,
+      "category": "mobile",
+      "screenName": "Landing Page - Mobile Viewport",
+      "navigationPath": "/",
+      "viewport": "390x844",
+      "uiState": "Responsive mobile layout with vertical hero stacking and horizontal quick navigation strip"
+    },
+    {
+      "filename": "mobile/02-login-page-mobile.png",
+      "status": "SUCCESS",
+      "fileSize": 79930,
+      "category": "mobile",
+      "screenName": "Authentication Portal - Mobile Viewport",
+      "navigationPath": "/login",
+      "viewport": "390x844",
+      "uiState": "Mobile-adapted official login form with 2-column account selector and credentials inputs"
+    },
+    {
+      "filename": "mobile/03-dashboard-mobile.png",
+      "status": "SUCCESS",
+      "fileSize": 90863,
+      "category": "mobile",
+      "screenName": "Executive Dashboard - Mobile Viewport",
+      "navigationPath": "/workspace#overview",
+      "viewport": "390x844",
+      "uiState": "Single-column responsive KPI card grid, mobile summary cards, and compact case list"
+    },
+    {
+      "filename": "modals/08-mobile-navigation-drawer-open.png",
+      "status": "SUCCESS",
+      "fileSize": 64032,
+      "category": "modals",
+      "screenName": "Mobile Navigation Drawer Menu",
+      "navigationPath": "/workspace (Mobile Drawer Open)",
+      "viewport": "390x844",
+      "uiState": "Full sliding navigation drawer with role-scoped sections, account switch, and sign-out"
+    },
+    {
+      "filename": "mobile/04-case-management-mobile.png",
+      "status": "SUCCESS",
+      "fileSize": 103142,
+      "category": "mobile",
+      "screenName": "Case Management - Mobile Viewport",
+      "navigationPath": "/workspace#cases",
+      "viewport": "390x844",
+      "uiState": "Mobile complaint cards with horizontal scroll table and touch-friendly quick filter chips"
+    },
+    {
+      "filename": "mobile/05-case-details-mobile.png",
+      "status": "SUCCESS",
+      "fileSize": 101394,
+      "category": "mobile",
+      "screenName": "Case Details Dossier - Mobile Viewport",
+      "navigationPath": "/workspace#case-detail",
+      "viewport": "390x844",
+      "uiState": "Stacked responsive dossier with sticky top actions and mobile-adapted audit timeline"
+    },
+    {
+      "filename": "mobile/06-institution-registry-mobile.png",
+      "status": "SUCCESS",
+      "fileSize": 91511,
+      "category": "mobile",
+      "screenName": "Institution Registry - Mobile Viewport",
+      "navigationPath": "/workspace#institutions",
+      "viewport": "390x844",
+      "uiState": "Responsive cards showing AICTE Permanent IDs and regional accreditation badges"
+    },
+    {
+      "filename": "mobile/07-overlap-detection-mobile.png",
+      "status": "SUCCESS",
+      "fileSize": 91167,
+      "category": "mobile",
+      "screenName": "Overlap Detection Queue - Mobile Viewport",
+      "navigationPath": "/workspace#overlaps",
+      "viewport": "390x844",
+      "uiState": "Mobile comparative layout displaying sibling complaint pairs and alignment scores"
+    },
+    {
+      "filename": "mobile/08-bureau-coordination-mobile.png",
+      "status": "SUCCESS",
+      "fileSize": 73403,
+      "category": "mobile",
+      "screenName": "Bureau Coordination - Mobile Viewport",
+      "navigationPath": "/workspace#coordination",
+      "viewport": "390x844",
+      "uiState": "Inter-bureau task stream and joint inspection dossiers adapted for mobile screens"
+    },
+    {
+      "filename": "mobile/09-alerts-mobile.png",
+      "status": "SUCCESS",
+      "fileSize": 82382,
+      "category": "mobile",
+      "screenName": "Operational Alerts - Mobile Viewport",
+      "navigationPath": "/workspace#alerts",
+      "viewport": "390x844",
+      "uiState": "Touch-optimized operational alert feed with direct action buttons for review"
+    },
+    {
+      "filename": "mobile/10-analytics-mobile.png",
+      "status": "SUCCESS",
+      "fileSize": 92464,
+      "category": "mobile",
+      "screenName": "Reports & Analytics - Mobile Viewport",
+      "navigationPath": "/workspace#reports",
+      "viewport": "390x844",
+      "uiState": "Responsive bar charts and resolution metrics formatted for mobile viewport"
+    },
+    {
+      "filename": "mobile/11-settings-mobile.png",
+      "status": "SUCCESS",
+      "fileSize": 89528,
+      "category": "mobile",
+      "screenName": "System Settings - Mobile Viewport",
+      "navigationPath": "/workspace#settings",
+      "viewport": "390x844",
+      "uiState": "System governance parameters and baseline restore controls adapted for touch"
+    }
+  ]
+}
