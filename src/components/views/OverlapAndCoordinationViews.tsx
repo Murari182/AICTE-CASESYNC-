@@ -148,8 +148,8 @@ export const OverlapDetectionView: React.FC = () => {
         </div>
       </div>
 
-      {/* Filter Pills with Smooth Sliding Pill Indicator */}
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Filter Pills with Smooth Flicker-Free Sliding Pill Indicator */}
+      <div className="neu-card rounded-2xl p-1.5 flex flex-wrap items-center gap-1">
         {[
           { id: 'ALL', label: `All Candidate Pairs (${relations.length})` },
           {
@@ -173,19 +173,25 @@ export const OverlapDetectionView: React.FC = () => {
           return (
             <button
               key={pill.id}
+              type="button"
               onClick={() => setStatusFilter(pill.id)}
-              className={`relative px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors duration-200 cursor-pointer ${
-                isActive ? 'text-white' : 'neu-btn-secondary'
+              className={`relative px-3.5 py-2 rounded-xl text-xs font-semibold border border-transparent transition-colors duration-150 cursor-pointer select-none ${
+                isActive
+                  ? 'text-white'
+                  : 'text-theme-secondary hover:text-theme-primary hover:bg-[var(--bg-elevated)]/60'
               }`}
             >
               {isActive && (
                 <motion.span
                   layoutId="overlap-filter-active-pill"
+                  initial={false}
                   transition={{
-                    duration: 0.22,
-                    ease: [0.22, 1, 0.36, 1],
+                    type: 'spring',
+                    stiffness: 420,
+                    damping: 34,
+                    mass: 0.7,
                   }}
-                  className="absolute inset-0 rounded-xl neu-btn-primary"
+                  className="absolute inset-0 rounded-xl neu-nav-pill pointer-events-none"
                 />
               )}
               <span className="relative z-10">{pill.label}</span>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import {
   AlertCircle,
   AlertTriangle,
@@ -422,26 +422,21 @@ export const SubSectionTransition: React.FC<{
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={transitionKey}
-        initial={
-          prefersReducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 12 }
-        }
-        animate={{ opacity: 1, x: 0 }}
-        exit={
-          prefersReducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -6 }
-        }
-        transition={
-          prefersReducedMotion
-            ? { duration: 0 }
-            : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }
-        }
-        className={className}
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <motion.div
+      key={transitionKey}
+      initial={
+        prefersReducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 10 }
+      }
+      animate={{ opacity: 1, x: 0 }}
+      transition={
+        prefersReducedMotion
+          ? { duration: 0 }
+          : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }
+      }
+      className={`${className} will-change-[transform,opacity]`}
+    >
+      {children}
+    </motion.div>
   );
 };
 
